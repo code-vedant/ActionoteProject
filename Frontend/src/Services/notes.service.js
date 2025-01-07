@@ -25,6 +25,8 @@ const NotesService = {
       const response = await axios.get(`${URL}/user`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
+      console.log("response: ", response.data);
+      
       return response.data;
     } catch (error) {
       handleApiError(error);

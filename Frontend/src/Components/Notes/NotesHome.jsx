@@ -1,45 +1,34 @@
 import React, { useEffect, useState, useRef } from "react";
 import pen from "../../assets/Icons/pen.png";
 import { Link } from "react-router-dom";
-import NotesService from "../../Services/notes.service"; // Adjust the path as needed
+import NotesService from "../../Services/notes.service"
 import { useSelector } from "react-redux";
 import plus from "../../assets/Icons/plus.png";
 import NotesBox from "./NotesBox";
 import { Helmet } from "react-helmet";
+import PopupHolder from "../Popups/PopupHolder";
 
 function NotesHome() {
-  const notes = [
-    {
-      id: 1,
-      title: "First Note",
-      content:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel felis vel ipsum porttitor gravida. In hac habitasse platea dictumst. Sed vitae aliquet neque, vel tempor mi. Sed ac dolor non lectus convallis tristique vitae vel ex. Donec id lectus a turpis condimentum finibus.",
-    },
-    {
-      id: 2,
-      title: "Second Note",
-      content:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel felis vel ipsum porttitor gravida. In hac habitasse platea dictumst. Sed vitae aliquet neque, vel tempor mi. Sed ac dolor non lectus convallis tristique vitae vel ex. Donec id lectus a turpis condimentum finibus.",
-    },
-    {
-      id: 3,
-      title: "",
-      content:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel felis vel ipsum porttitor gravida. In hac habitasse platea dictumst. Sed vitae aliquet neque, vel tempor mi. Sed ac dolor non lectus convallis tristique vitae vel ex. Donec id lectus a turpis condimentum finibus.",
-    },
-    {
-      id: 4,
-      title: "Third Note",
-      content:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel felis vel ipsum porttitor gravida. In hac habitasse platea dictumst. Sed vitae aliquet neque, vel tempor mi. Sed ac dolor non lectus convallis tristique vitae vel ex. Donec id lectus a turpis condimentum finibus.",
-    },
-    {
-      id: 5,
-      title: "",
-      content:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel felis vel ipsum porttitor gravida. In hac habitasse platea dictumst. Sed vitae aliquet neque, vel tempor mi. Sed ac dolor non lectus convallis tristique vitae vel ex. Donec id lectus a turpis condimentum finibus.",
+
+  const accessToken = useSelector((state)=> state.auth.accessToken);
+  const [notesData, setNotesData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchNotes = async () => {
+    try {
+      const response = await NotesService.getAllNotes(accessToken);
+      console.log(response.data);
+      setNotesData(response.data);
+    } catch (error) {
+      console.error("Error fetching notes:", error.message);
     }
-  ];
+  }
+
+  useEffect(() => {
+    setLoading(true);
+    fetchNotes();
+    setLoading(false);
+  }, [accessToken]);
 
   return (
     <>
@@ -48,6 +37,9 @@ function NotesHome() {
     <meta name="description" content="Your personal digital notes" />
     <meta name="keywords" content="notes, records, actionote, personal" />
   </Helmet>
+    {loading && <PopupHolder>
+
+    </PopupHolder>}
     <section className="w-full h-full relative px-10 py-4 flex flex-col justify-start items-start">
       <h1 className="text-4xl font-bold text-[#39a2ff]">
         Welcome to Actionote x Notes
@@ -64,8 +56,8 @@ function NotesHome() {
         </Link>
         </div>
 
-        {notes.map((note, index) => (
-          <Link to={"/dashboard/notes/:id"}>
+        {notesData.map((note, index) => (
+          <Link to={`/dashboard/notes/${note._id}`} className="w-fit h-fit">
           <NotesBox key={index} note={note}/>
           </Link>
         ))}
