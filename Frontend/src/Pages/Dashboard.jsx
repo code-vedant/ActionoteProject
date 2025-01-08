@@ -37,7 +37,7 @@ function Dashboard() {
       </Helmet>
 
       <main className="w-full h-fit min-h-screen bg-[#f0f4fa] dark:bg-[#1a1a1a] dark:text-white overflow-hidden">
-        <section className="headerSection  w-full h-16 flex items-center justify-between px-1">
+        <section className="headerSection fixed z-50 bg-[#1d1d1d]  w-full h-16 flex items-center justify-between px-1">
           {/* Sidebar Toggle Button */}
           <div className="sideBarIcon h-12 w-12">
             <SideBar viewSidebar={viewSidebar} handleview={handleSidebarToggle} />
@@ -78,7 +78,7 @@ function Dashboard() {
         </section>
 
         {/* Main Content Section */}
-        <section className={`main h-full w-full transform duration-300 ${viewSidebar ? "md:pl-56" : ""}`}>
+        <section className={`main mt-16 h-full w-full transform duration-300 ${viewSidebar ? "md:pl-56" : ""}`}>
           <Outlet />
         </section>
       </main>

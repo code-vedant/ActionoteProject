@@ -11,7 +11,6 @@ import { ThemeProvider } from './context/ThemeContext.jsx';
 import { Provider } from 'react-redux';
 import store from './Store/Store.js';
 import DrawingCanvas from './Components/DrawCanvas/DrawingCanvas.jsx';
-import MindMap from './Components/Mindmap/Mindmap.jsx';
 import NotFound from './Pages/NotFound.jsx';
 import PomodoroTimer from './Components/Promodo/PomodoroTimer.jsx';
 import Calendar from './Components/Calendars/Calendar.jsx';
@@ -58,12 +57,8 @@ const router = createBrowserRouter([
         element: <DrawHome/>
       },
       {
-        path: '/dashboard/draw/new',
+        path: '/dashboard/draw/:id',
         element: <DrawingCanvas/>
-      },
-      {
-        path: '/dashboard/mindmap',
-        element: <MindMap/>
       },
       {
         path: '/dashboard/pomodoro',

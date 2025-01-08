@@ -35,7 +35,7 @@ const AddTodoForm = ({ accessToken, handleTodoPopup }) => {
   }, [handleTodoPopup]);
 
   const onSubmit = async (data) => {
-    // Process tags as an array
+
     const formattedData = {
       ...data,
       tags: data.tags.split(",").map((tag) => tag.trim()),
@@ -43,7 +43,8 @@ const AddTodoForm = ({ accessToken, handleTodoPopup }) => {
 
     try {
       await TodoService.createTodo(formattedData, accessToken);
-      reset(); // Reset form after successful submission
+      reset();
+      handleTodoPopup()
     } catch (error) {
       console.error("Failed to add the todo", error);
     }

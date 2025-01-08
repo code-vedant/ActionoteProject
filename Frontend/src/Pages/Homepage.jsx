@@ -7,7 +7,6 @@ import trackerblue from "../assets/Icons/trackerblue.png";
 import timerblue from "../assets/Icons/timerblue.png";
 import noteblue from "../assets/Icons/noteblue.png";
 import diaryblue from "../assets/Icons/diaryblue.png";
-import mindmapblue from "../assets/Icons/mindmapblue.png";
 import drawingblue from "../assets/Icons/drawingblue.png";
 import { useTheme } from "@/context/ThemeContext";
 import LoadingScreen from "@/Components/LoadingScreen";
@@ -91,12 +90,6 @@ export default function Homepage() {
       title: "Diary",
       description:
         "Reflect on your day and track your personal growth with daily journaling.",
-    },
-    {
-      icon: mindmapblue,
-      title: "Mind Maps",
-      description:
-        "Visualize your thoughts and ideas by creating structured mind maps.",
     },
     {
       icon: drawingblue,

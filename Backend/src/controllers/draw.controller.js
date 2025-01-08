@@ -2,70 +2,77 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import Draw from "../models/draw.models.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
-// Save a drawing (create or update)
+// Helper function to process base64 drawing
+const processBase64Drawing = (drawing) => {
+  if (!drawing.startsWith("data:image")) {
+    throw new ApiError(400, "Invalid drawing format.");
+  }
+
+  const matches = drawing.match(/^data:image\/([a-zA-Z]*);base64,([^"]*)/);
+  if (!matches || matches.length !== 3) {
+    throw new ApiError(400, "Invalid base64 image format.");
+  }
+
+  const imageData = matches[2];
+  return Buffer.from(imageData, "base64");
+};
+
+// Save a new drawing
 const saveDrawing = asyncHandler(async (req, res) => {
-  const { drawId, title, description, tags, drawing } = req.body;
+  const { title, description, tags, drawing } = req.body;
 
   if (!title || !drawing) {
     throw new ApiError(400, "Title and drawing are required.");
   }
 
-  let imageBuffer;
+  const imageBuffer = processBase64Drawing(drawing);
 
-  if (drawing.startsWith("data:image")) {
-    // Extract the base64 data
-    const matches = drawing.match(/^data:image\/([a-zA-Z]*);base64,([^\"]*)/);
+  const newDrawing = await Draw.create({
+    title,
+    description,
+    tags,
+    drawing: imageBuffer.toString("base64"), // Save base64 string
+    creator: req.user._id,
+  });
 
-    if (matches && matches.length === 3) {
-      const imageData = matches[2]; // Base64 string without the prefix
-      imageBuffer = Buffer.from(imageData, 'base64');
-    } else {
-      throw new ApiError(400, "Invalid base64 image format.");
-    }
+  return res
+    .status(201)
+    .json(new ApiResponse(201, newDrawing, "Drawing created successfully."));
+});
 
-    // Upload to Cloudinary
-    try {
-      const imageUrl = await uploadOnCloudinary(imageBuffer, `drawings/${title}`);
-      
-      let draw;
-      if (drawId) {
-        // Update existing drawing
-        draw = await Draw.findByIdAndUpdate(
-          drawId,
-          {
-            title,
-            description,
-            tags,
-            drawing: imageUrl?.url || drawing,
-            updatedAt: new Date(),
-          },
-          { new: true, runValidators: true }
-        );
-        if (!draw) {
-          throw new ApiError(404, "Drawing not found.");
-        }
-      } else {
-        // Create a new drawing
-        draw = await Draw.create({
-          title,
-          description,
-          tags,
-          drawing: imageUrl?.url || drawing,
-          creator: req.user._id,
-        });
-      }
+// Update an existing drawing
+const updateDrawing = asyncHandler(async (req, res) => {
+  const { drawId, title, description, tags, drawing } = req.body;
 
-      return res.status(200).json(new ApiResponse(200, draw, "Drawing saved successfully."));
-
-    } catch (error) {
-      console.error("Error uploading to Cloudinary:", error);
-      throw new ApiError(500, "Error uploading drawing to Cloudinary.");
-    }
-  } else {
-    throw new ApiError(400, "Invalid drawing format.");
+  if (!drawId) {
+    throw new ApiError(400, "Drawing ID is required for updating.");
   }
+
+  if (!title && !description && !tags && !drawing) {
+    throw new ApiError(400, "At least one field must be updated.");
+  }
+
+  const updateData = { updatedAt: new Date() };
+  if (title) updateData.title = title;
+  if (description) updateData.description = description;
+  if (tags) updateData.tags = tags;
+  if (drawing) {
+    updateData.drawing = processBase64Drawing(drawing).toString("base64");
+  }
+
+  const updatedDrawing = await Draw.findByIdAndUpdate(drawId, updateData, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!updatedDrawing) {
+    throw new ApiError(404, "Drawing not found.");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedDrawing, "Drawing updated successfully."));
 });
 
 // Get all drawings for a user
@@ -117,4 +124,10 @@ const deleteDrawing = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Drawing deleted successfully."));
 });
 
-export { saveDrawing, getUserDrawings, getDrawingById, deleteDrawing };
+export {
+  saveDrawing,
+  updateDrawing,
+  getUserDrawings,
+  getDrawingById,
+  deleteDrawing,
+};

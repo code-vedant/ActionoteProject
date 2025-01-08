@@ -14,7 +14,7 @@ function ContentBarTask({ task,accessToken}) {
 
   const handleCheckboxChange = () => {
     setIsChecked(!isChecked);
-    handleTaskCompletion(); // Update task completion status
+    handleTaskCompletion();
   };
 
   const handleTaskCompletion = async () => {

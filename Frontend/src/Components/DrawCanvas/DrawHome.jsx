@@ -1,14 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import pen from "../../assets/Icons/pen.png";
 import PrevDrawsCard from './PrevDrawsCard';
 import { Link } from 'react-router-dom';
+import DrawService from '@/Services/draw.service';
+import { useSelector } from 'react-redux';
 
 function DrawHome() {
+  const accessToken = useSelector((state) => state.auth.accessToken);
+  const [prevDrawings,setPrevDrawings] = useState([]);
+
+  const fetchDrawings = async () => {
+    try {
+      const res = await DrawService.getDrawingsForUser(accessToken)
+      console.log(res.data);
+      setPrevDrawings(res.data);
+    } catch (error) {
+      console.error(error.message);
+      
+    }
+  }
+
+  useEffect(() =>{
+    fetchDrawings();
+  },[accessToken])
+
   const previousProjects = [
-    { title: 'Project 1', link: '/dashboard/draw/1' },
-    { title: 'Project 2', link: '/dashboard/draw/2' },
-    { title: 'Project 3', link: '/dashboard/draw/3' },
-    // Add more projects here
   ];
 
   return (
@@ -19,14 +35,14 @@ function DrawHome() {
           <img src={pen} className='w-2/3 h-2/3' alt="draw" />
         </Link>
       </div>
-      <div className="prevProjects mt-6">
+      <div className="prevProjects mt-6 w-full">
         <h1 className="text-2xl font-bold text-[#39a2ff]">Previous Projects</h1>
-        <div className="containers">
-          {previousProjects.length === 0 ? (
+        <div className="containers w-full flex flex-wrap gap-2 ">
+          {prevDrawings.length === 0 ? (
             <p>No previous projects available.</p>
           ) : (
-            previousProjects.map((project) => (
-              <PrevDrawsCard key={project.title} project={project} />
+            prevDrawings.map((project) => (
+              <PrevDrawsCard key={project._id} project={project} />
             ))
           )}
         </div>

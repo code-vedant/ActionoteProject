@@ -18,7 +18,6 @@ app.use(cookieParser())
 
 
 import userRouter from './routes/user.routes.js'
-import flowRouter from './routes/flow.routes.js'
 import drawRouter from './routes/draw.routes.js'
 import tagsRouter from './routes/tags.routes.js'
 import todoRouter from './routes/todo.routes.js'
@@ -32,7 +31,6 @@ app.get("/", (req, res) => {
 })
 
 app.use('/v1/user',userRouter)
-app.use('/v1/flow',flowRouter)
 app.use('/v1/draw',drawRouter)
 app.use('/v1/tags',tagsRouter)
 app.use('/v1/todo',todoRouter)

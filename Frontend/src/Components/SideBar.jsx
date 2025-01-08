@@ -4,7 +4,6 @@ import { useTheme } from "@/context/ThemeContext";
 import LogoutBtn from "./LogoutBtn";
 
 import calendarblueint from "../assets/Icons/calendarblueint.png";
-import mindmapblueint from "../assets/Icons/mindmapblueint.png";
 import timerblue from "../assets/Icons/timerblue.png";
 import todoblue from "../assets/Icons/todoblue.png";
 import notesblue from "../assets/Icons/notesblue.png";
@@ -20,7 +19,6 @@ function SideBar({ viewSidebar, handleview }) {
     { title: "Diary", icon: diaryblueint, route: "/dashboard/diary" },
     { title: "Notes", icon: notesblue, route: "/dashboard/notes" },
     { title: "Pomodoro", icon: timerblue, route: "/dashboard/pomodoro" },
-    { title: "Mind Map", icon: mindmapblueint, route: "/dashboard/mindmap" },
     { title: "Draw", icon: drawingblueint, route: "/dashboard/draw" },
   ];
 
