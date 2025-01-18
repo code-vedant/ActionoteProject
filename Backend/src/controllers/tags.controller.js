@@ -5,20 +5,22 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 
 // Create a new tag
 const createTag = asyncHandler(async (req, res) => {
-  const { name, description, color } = req.body;
+  const { name, color } = req.body;
 
   if (!name) {
     throw new ApiError(400, "Tag name is required.");
   }
 
-  const existingTag = await Tag.findOne({ userId: req.user._id, name });
+  const slug = name.toLowerCase().replace(/\s+/g, "-");
+
+  const existingTag = await Tag.findOne({ userId: req.user._id, $or: [{ name }, { slug }] });
   if (existingTag) {
-    throw new ApiError(400, "A tag with this name already exists.");
+    throw new ApiError(400, "A tag with this name or slug already exists.");
   }
 
   const tag = await Tag.create({
     name,
-    description,
+    slug,
     color,
     userId: req.user._id,
   });
@@ -48,11 +50,25 @@ const getTagById = asyncHandler(async (req, res) => {
 // Update a tag
 const updateTag = asyncHandler(async (req, res) => {
   const { tagId } = req.params;
-  const { name, description, color } = req.body;
+  const { name, color } = req.body;
+
+  const slug = name ? name.toLowerCase().replace(/\s+/g, "-") : undefined;
+
+  // Check if the new name or slug conflicts with an existing tag (excluding the current tag)
+  if (name) {
+    const existingTag = await Tag.findOne({
+      userId: req.user._id,
+      $or: [{ name }, { slug }],
+      _id: { $ne: tagId },
+    });
+    if (existingTag) {
+      throw new ApiError(400, "A tag with this name or slug already exists.");
+    }
+  }
 
   const tag = await Tag.findOneAndUpdate(
     { _id: tagId, userId: req.user._id },
-    { name, description, color },
+    { name, slug, color },
     { new: true, runValidators: true }
   );
 

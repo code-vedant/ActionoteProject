@@ -20,7 +20,7 @@ const MonthlyGoalSchema = new Schema(
       default: false,
     },
     month: {
-      type: String, // e.g., "2024-11"
+      type: String,
       required: true,
     },
     priority: {
@@ -28,6 +28,12 @@ const MonthlyGoalSchema = new Schema(
       enum: ["low", "medium", "high"],
       default: "medium",
     },
+    tags: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Tag",
+      }
+    ]
   },
   { timestamps: true }
 );

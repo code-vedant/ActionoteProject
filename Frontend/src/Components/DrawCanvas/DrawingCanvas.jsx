@@ -1,68 +1,43 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import pen from "../../assets/Icons/pen.png";
 import eraser from "../../assets/Icons/eraser.png";
-import DrawService from "@/Services/draw.service";
-import { useNavigate, useParams } from "react-router-dom";
+import DrawService from "../../Services/draw.service"; // Import the DrawService
 import { useSelector } from "react-redux";
+import { decrypt, encrypt } from "@/Binders/Encypt";
+import { useNavigate, useParams } from "react-router-dom";
 
 function DrawingCanvas() {
   const { id } = useParams();
   const canvasRef = useRef(null);
+  const navigate = useNavigate();
   const [isDrawing, setIsDrawing] = useState(false);
   const [strokeColor, setStrokeColor] = useState("#000000");
   const [strokeWidth, setStrokeWidth] = useState(10);
-  const [canvasColor, setCanvasColor] = useState(true);
+  const [canvasColor, setCanvasColor] = useState("#2e2e2e");
   const [ctx, setCtx] = useState(null);
   const [tool, setTool] = useState("draw");
-  const [currentDrawing, setCurrentDrawing] = useState(null);
-  const navigate = useNavigate();
+  const [colorTab, setColorTab] = useState(false);
+  const [widthCanvas, setWidthCanvas] = useState("1280px");
+  const [heightCanvas, setHeightCanvas] = useState("720px");
   const accessToken = useSelector((state) => state.auth.accessToken);
-
-  const colorPicker = (clr) => {
-    setStrokeColor(clr);
-  };
-
 
   const initializeCanvas = () => {
     const canvas = canvasRef.current;
     if (canvas) {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
-
+  
       const context = canvas.getContext("2d");
-      setCtx(context);
-
-      // Render the drawing if it exists
-      if (currentDrawing?.drawing) {
-        const img = new Image();
-        img.src = `data:image/png;base64,${currentDrawing.drawing}`;
-        img.onload = () => {
-          context.drawImage(img, 0, 0, canvas.width, canvas.height);
-        };
-      } else {
-        context.clearRect(0, 0, canvas.width, canvas.height);
+      if (context) {
+        context.fillStyle = canvasColor; // Initialize with canvas background color
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        setCtx(context);
       }
     }
   };
+  
 
-  useEffect(() => {
-    const loadDrawing = async () => {
-      if (id !== "new") {
-        try {
-          const response = await DrawService.getDrawingById(id, accessToken);
-          const drawingData = response.data;
-          setCurrentDrawing(drawingData);
-        } catch (error) {
-          console.error("Error fetching drawing:", error);
-          alert("Failed to load the drawing. Please try again.");
-        }
-      } else {
-        setCurrentDrawing(null);
-      }
-    };
-
-    loadDrawing();
-  }, [id]);
+  console.log(decrypt(id));
 
   useEffect(() => {
     initializeCanvas();
@@ -71,11 +46,19 @@ function DrawingCanvas() {
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
-  }, [currentDrawing]);
+  }, []);
+
+  const strokeColorChanger = (color) => setStrokeColor(color);
+
+  const handleCanvasColor = (isLight) => setCanvasColor(isLight);
 
   const getMousePos = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
   };
 
   const startDrawing = (e) => {
@@ -111,156 +94,301 @@ function DrawingCanvas() {
     ctx.closePath();
     setIsDrawing(false);
   };
+  console.log("ID from useParams:", id);
 
-  const saveOrUpdateDrawing = async () => {
+
+  // const loadDrawing = async () => {
+  //   if (ctx && id.trim() !== "startedNewDrawing") {
+  //     try {
+  //       const res = await DrawService.getDrawingById(decrypt(id), accessToken);
+  //       const canvas = canvasRef.current;
+  //       const img = new Image();
+  //       img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  //       img.src = `data:image/png;base64,${res.data.drawing}`;
+  //     } catch (error) {
+  //       console.error("Error loading drawing:", error.message);
+  //     }
+  //   }
+  // };
+  
+
+  // useEffect(() => {
+  //   if (ctx && id.trim() !== "startedNewDrawing") {
+  //     loadDrawing();
+  //   }
+  // }, [id, ctx]);
+  
+
+  const saveDrawing = async () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-  
-    const canvasData = canvas.toDataURL("image/png");
-  
-    const title = currentDrawing?.title || prompt("Enter a title for your project:");
-  
-    if (!title) {
-      alert("Title is required.");
-      return;
-    }
-  
-    const data = {
-      title : title,
-      drawing: canvasData,
+    const context = ctx;
+
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempContext = tempCanvas.getContext("2d");
+
+    tempContext.fillStyle = canvasColor;
+    tempContext.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    tempContext.drawImage(canvas, 0, 0);
+
+    const dataURL = tempCanvas.toDataURL("image/png");
+
+    const drawingData = {
+      drawing: dataURL,
     };
-  
-    const updateData = {
-      drawId: currentDrawing?._id || null,
-      title,
-      drawing: canvasData,
-    };
-  
-    console.log(data);
-  
-    if (id === "new") {
-      try {
-        const response = await DrawService.saveDrawing(data, accessToken);
-        alert("Drawing saved successfully!");
-        setCurrentDrawing(response.data);
-        navigate(`/dashboard/draw/${response.data._id}`);
-      } catch (error) {
-        console.error("Error saving drawing:", error.data);
-        console.log("Failed to save the drawing. Please try again.");
-      }
-    } else {
-      try {
-        await DrawService.updateDrawing(updateData, accessToken);
-        alert("Drawing updated successfully!");
-      } catch (error) {
-        console.error("Error updating drawing:", error);
-        alert("Failed to update the drawing. Please try again.");
-      }
+    try {
+      const res = await DrawService.saveDrawing(drawingData, accessToken);
+      alert("Drawing saved successfully");
+      navigate(`/dashboard/draw/${encrypt(res.data._id)}`);
+    } catch (error) {
+      console.error("Error saving drawing:", error);
     }
   };
-  
-  
+
+  const updateDrawing = async () => {
+    const canvas = canvasRef.current;
+    const context = ctx;
+
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempContext = tempCanvas.getContext("2d");
+
+    tempContext.fillStyle = canvasColor;
+    tempContext.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    tempContext.drawImage(canvas, 0, 0);
+
+    const dataURL = tempCanvas.toDataURL("image/png");
+
+    const drawingData = {
+      drawId: decrypt(id),
+      drawing: dataURL,
+    };
+    console.log(drawingData);
+
+    try {
+      await DrawService.updateDrawing(drawingData, accessToken);
+      alert("Drawing updated successfully");
+    } catch (error) {
+      console.error("Error saving drawing:", error);
+    }
+  };
+
+  const savePNG = () => {
+    const canvas = canvasRef.current;
+    const context = ctx;
+
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempContext = tempCanvas.getContext("2d");
+
+    tempContext.fillStyle = canvasColor;
+    tempContext.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    tempContext.drawImage(canvas, 0, 0);
+
+    const dataURL = tempCanvas.toDataURL("image/png");
+
+    const link = document.createElement("a");
+    link.href = dataURL;
+    link.download = "drawing.png";
+    link.click();
+  };
 
   const deleteDrawing = async () => {
     try {
-      await DrawService.deleteDrawingById(currentDrawing?._id, accessToken);
-      alert("Drawing deleted successfully!");
-      setCurrentDrawing(null);
-      navigate("/dashboard/draw")
+      const res = await DrawService.deleteDrawingById(decrypt(id), accessToken);
+      navigate("/dashboard/draw");
     } catch (error) {
-      console.error("Error deleting drawing:", error);
-      alert("Failed to delete the drawing. Please try again.");
+      console.error(error.message);
     }
   };
 
   return (
-    <div className="w-full flex flex-col items-center pt-3 bg-blue-400 h-screen overflow-hidden relative">
+    <div className="min-w-full flex flex-col items-center pt-7 min-h-screen relative">
       <canvas
         ref={canvasRef}
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
-        onTouchStart={startDrawing}
-        onTouchMove={draw}
-        onTouchEnd={stopDrawing}
         style={{
-          backgroundColor: canvasColor ? "#f0f0f0" : "#2e2e2e",
-          width: "90vw",
-          height: "80vh",
-          boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)",
-          borderRadius: "10px",
+          backgroundColor: canvasColor,
+          width: widthCanvas,
+          height: heightCanvas,
         }}
       />
-      <div className="flex flex-wrap w-[90vw] h-18 items-center justify-center gap-2 md:gap-20">
-        <div className="bgColorSelector w-fit h-9 lg:h-10 flex items-center bg-[#39a2ff] rounded-2xl px-2 gap-2">
+      <div className="absolute flex flex-col bg-gray-200 shadow-lg justify-start py-3 shadow-gray-600 top-1/2 right-8 -translate-x-1/2 -translate-y-1/2 z-50 w-12 h-fit items-center gap-2 px-5 rounded-full">
+        <div className="bgColorSelector border-[1px] border-[#39a2ff] px-4 w-full h-fit py-2 rounded-md flex flex-col items-center gap-2">
           <button
-            onClick={() => setCanvasColor(false)}
-            className="w-8 h-8 bg-[#2e2e2e] rounded-full"
+            onClick={() => {
+              setWidthCanvas("1080px");
+              setHeightCanvas("600px");
+            }}
+            className="w-6 h-4 bg-[#1d1d1d] rounded-md"
           ></button>
           <button
-            onClick={() => setCanvasColor(true)}
-            className="w-8 h-8 bg-[#f0f0f0] rounded-full"
-          ></button>
-        </div>
-        <div className="bgColorSelector w-fit h-9 lg:h-10 flex items-center bg-[#39a2ff] rounded-2xl px-2 gap-2">
-          <button
-            onClick={() => colorPicker("#000000")}
-            className="w-8 h-8 bg-[#000000] rounded-full"
+            onClick={() => {
+              setWidthCanvas("480px");
+              setHeightCanvas("600px");
+            }}
+            className="w-4 h-6 bg-[#1d1d1d] rounded-md"
           ></button>
           <button
-            onClick={() => colorPicker("#ff0000")}
-            className="w-8 h-8 bg-[#ff0000] rounded-full"
-          ></button>
-          <button
-            onClick={() => colorPicker("#ffff00")}
-            className="w-8 h-8 bg-[#ffFF00] rounded-full"
-          ></button>
-          <button
-            onClick={() => colorPicker("#0000ff")}
-            className="w-8 h-8 bg-[#0000FF] rounded-full"
-          ></button>
-          <button
-            onClick={() => colorPicker("#00ff00")}
-            className="w-8 h-8 bg-[#00ff00] rounded-full"
+            onClick={() => {
+              setWidthCanvas("512px");
+              setHeightCanvas("512px");
+            }}
+            className="w-5 h-5 bg-[#1d1d1d] rounded-md"
           ></button>
         </div>
-        <div className="toolSelector w-fit  h-9 lg:h-10 flex items-center bg-[#39a2ff] rounded-2xl px-2 gap-2">
-          <button
-            className="w-8 h-8 rounded-full flex items-center justify-center object-contain bg-sky-blue"
-            onClick={() => setTool("draw")}
-          >
-            <img className="w-2/3 h-2/3" src={pen} alt="" />
-          </button>
+        <div className="bgColorSelector border-[1px] border-[#39a2ff] h-fit w-full px-4 py-2 rounded-md flex flex-col items-center gap-2">
           <input
-            type="range"
-            min="1"
-            max="50"
-            value={strokeWidth}
-            onChange={(e) => setStrokeWidth(parseInt(e.target.value))}
-            className="w-20"
+            type="color"
+            className="w-8 h-8 rounded-xl p-0 appearance-none cursor-pointer border-none"
+            style={{ background: "none", outline: "none" }}
+            onChange={(e) => handleCanvasColor(e.target.value)}
           />
+
           <button
-            className="w-8 h-8 rounded-full flex items-center justify-center object-contain bg-sky-blue"
-            onClick={() => setTool("erase")}
-          >
-            <img className="w-2/3 h-2/3" src={eraser} alt="" />
-          </button>
+            onClick={() => handleCanvasColor("#2e2e2e")}
+            className="w-6 h-6 bg-[#2e2e2e] rounded-md"
+          ></button>
+          <button
+            onClick={() => handleCanvasColor("#f0f0f0")}
+            className="w-6 h-6 bg-[#f0f0f0] border-[1px] border-black rounded-md"
+          ></button>
         </div>
-        <div className="flex gap-1">
+
+        <div className="toolSelector relative h-fit w-full px-4 py-2 flex flex-col items-center gap-2">
           <button
-            onClick={saveOrUpdateDrawing}
-            className="bg-sky-blue px-4 h-9 lg:h-10 rounded text-white"
+            className={`h-8 w-8 aspect-square rounded-md border-[1px] border-[#39a2ff] flex justify-center items-center 
+              ${tool === "draw" ? "bg-[#39a2ff]" : "bg-slate-500"}`}
+            onClick={() => {
+              setTool("draw");
+              setColorTab((prev) => !prev);
+            }}
           >
-            Save
+            <img src={pen} alt="Draw Tool" className="w-6 h-6" />
           </button>
-          <button
-            onClick={() => deleteDrawing()}
-            className="bg-sky-blue px-4 h-9 lg:h-10 rounded text-white"
-          >
-            Delete
-          </button>
+          {colorTab && (
+            <div className="absolute top-5 right-0 -translate-x-12 bg-[#f7f8f9] dark:bg-[#4c4c4c] p-3 rounded w-36 shadow-lg flex flex-col items-center gap-2">
+              <input
+                type="range"
+                min="1"
+                max="50"
+                value={strokeWidth}
+                onChange={(e) => setStrokeWidth(parseInt(e.target.value))}
+                className="w-20"
+              />
+              <input
+                type="color"
+                className="w-8 h-8 rounded-xl p-0 appearance-none cursor-pointer border-none"
+                style={{ background: "none", outline: "none" }}
+                onChange={(e) => strokeColorChanger(e.target.value)}
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => strokeColorChanger("#000000")}
+                  className="w-6 h-6 bg-black rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#facc11")}
+                  className="w-6 h-6 bg-yellow-400 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#dc2626")}
+                  className="w-6 h-6 bg-red-600 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#143cbb")}
+                  className="w-6 h-6 bg-blue-800 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#4ade80")}
+                  className="w-6 h-6 bg-green-400 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#a855f7")}
+                  className="w-6 h-6 bg-purple-500 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#f43f5e")}
+                  className="w-6 h-6 bg-rose-500 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#0ea5e9")}
+                  className="w-6 h-6 bg-sky-500 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#fde047")}
+                  className="w-6 h-6 bg-yellow-300 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#ef4444")}
+                  className="w-6 h-6 bg-red-500 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#9ca3af")}
+                  className="w-6 h-6 bg-gray-400 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#14b8a6")}
+                  className="w-6 h-6 bg-teal-500 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#f97316")}
+                  className="w-6 h-6 bg-orange-500 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#9333ea")}
+                  className="w-6 h-6 bg-indigo-600 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#34d399")}
+                  className="w-6 h-6 bg-emerald-400 rounded-full"
+                ></button>
+                <button
+                  onClick={() => strokeColorChanger("#34d348")}
+                  className="w-6 h-6 bg-[#34d348] rounded-full"
+                ></button>
+              </div>
+            </div>
+          )}
         </div>
+
+        <button
+          onClick={() => setTool("erase")}
+          className={`h-8 w-8  aspect-square rounded-md border-[1px] border-[#39a2ff] flex justify-center items-center 
+          ${tool === "erase" ? "bg-[#39a2ff]" : "bg-slate-500"}`}
+        >
+          <img src={eraser} alt="Draw Tool" className="w-6 h-6" />
+        </button>
+        <button
+          onClick={id !== "startedNewDrawing" ? updateDrawing : saveDrawing}
+          className="bg-[#39a2ff] font-light aspect-square py-2 rounded-full text-white"
+        >
+          {id !== "startedNewDrawing" ? <h2 className="text-xs px-1">Update</h2> : "Save"}
+        </button>
+        <button
+          onClick={savePNG}
+          className="border-[3px] border-[#39a2ff] font-bold aspect-square py-1 text-xs px-1 rounded-full text-[#39a2ff]"
+        >
+          .png
+        </button>
+
+        {id !== "startedNewDrawing" && (
+          <button
+            onClick={deleteDrawing}
+            className="border-[3px] border-red-500 font-bold aspect-square py-1 text-xs  rounded-full text-red-500 hover:bg-red-500 hover:text-white"
+          >
+            delete
+          </button>
+        )}
       </div>
     </div>
   );

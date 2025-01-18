@@ -1,32 +1,40 @@
-import React from 'react'
-import TagBox from './TagBox'
+import React, { useState, useEffect } from 'react';
+import TagBox from './TagBox';
+import TagsService from '@/Services/tags.service';
+import { useSelector } from 'react-redux';
 
-function TagBar() {
+function TagBar({ tags }) {
+  const [tagList, setTagList] = useState([]);
+  const accessToken = useSelector((state) => state.auth.accessToken);
 
-    const tags = [
-        {
-            id: 1,
-            name: 'home',
-            color: '#000a9a',
-        },
-        {
-            id: 2,
-            name: 'daily',
-            color: '#aa1a1a',
-        },
-        {
-            id: 3,
-            name: 'personal',
-            color: '#1a9a1a',
-        }
-    ]
+  const fetchTagList = async () => {
+    try {
+      const tagList = await Promise.all(
+        (tags || []).map(async (tagId) => {
+          const res = await TagsService.getTagById(tagId, accessToken);
+          return res?.data;
+        })
+      );
+      setTagList(tagList.filter(tag => tag));
+    } catch (error) {
+      console.error("Error fetching tags:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (tags && tags.length > 0) {
+      fetchTagList();
+    }
+  }, [tags, accessToken]);
+
   return (
-    <div className='w-full h-full opacity-80 flex flex-wrap gap-2 item justify-start'>
-        {tags.map((tag) => (
-            <TagBox key={tag.id} tag={tag}/>
+    <div className="w-full h-full opacity-80 flex flex-wrap gap-2 justify-start">
+      {tagList.length > 0 &&
+        tagList.map((tag) => (
+          <TagBox key={tag._id || `fallback-${Math.random()}`} tag={tag} />
         ))}
     </div>
-  )
+  );
 }
 
-export default TagBar
+export default TagBar;

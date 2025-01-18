@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import down from "../../assets/Icons/down.png";
+import { useSelector } from "react-redux";
+import { PomodoService } from "@/Services/pomodoro.service";
 
 const PomodoroTimer = () => {
-  // State for the form fields and timer
   const [projectName, setProjectName] = useState("");
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -14,14 +15,43 @@ const PomodoroTimer = () => {
   const [showForm, setShowForm] = useState(true);
   const [currentRound, setCurrentRound] = useState(1);
   const [isBreak, setIsBreak] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleFormChange = () => {
-    setShowForm(!showForm);
+  const accessToken = useSelector((state) => state.auth.accessToken);
+  const handleFormChange = () => setShowForm(prev => !prev);
+
+  const handleSaveSession = async () => {
+    const sessionData = {
+      title: projectName,
+      description: '',
+      duration: `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`,
+      shortBreak: roundBreak,
+      longBreak: sessionBreak,
+      cycles: rounds,
+    };
+
+    try {
+      setIsLoading(true); // Show loading indicator
+      setError(null); // Reset any previous error
+
+      const savedSession = await PomodoService.createPomodoSession(sessionData,accessToken);
+
+      if (savedSession) {
+        setHistory(prev => [...prev, savedSession]);
+      } else {
+        setError('Failed to save session. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error saving session:', err);
+      setError('An error occurred while saving the session. Please try again.');
+    } finally {
+      setIsLoading(false); // Hide loading indicator
+    }
   };
 
-  const handleStart = () => {
-    setIsRunning(true);
-  };
+  const handleStart = () => setIsRunning(true);
 
   const handleReset = () => {
     setIsRunning(false);
@@ -29,6 +59,7 @@ const PomodoroTimer = () => {
     setSeconds(0);
     setCurrentRound(1);
     setIsBreak(false);
+    handleSaveSession();
   };
 
   useEffect(() => {
@@ -36,13 +67,11 @@ const PomodoroTimer = () => {
 
     if (isRunning) {
       intervalId = setInterval(() => {
-        setSeconds((prevSeconds) => {
-          if (prevSeconds > 0) return prevSeconds - 1;
+        setSeconds(prev => {
+          if (prev > 0) return prev - 1;
 
-          setMinutes((prevMinutes) => {
-            if (prevMinutes > 0) return prevMinutes - 1;
-
-            // Handle end of timer logic
+          setMinutes(prev => {
+            if (prev > 0) return prev - 1;
             if (isBreak) {
               setIsBreak(false);
               return roundBreak;
@@ -58,7 +87,7 @@ const PomodoroTimer = () => {
         if (minutes === 0 && seconds === 0 && currentRound >= rounds) {
           handleReset();
         } else if (minutes === 0 && seconds === 0) {
-          setCurrentRound((prev) => prev + 1);
+          setCurrentRound(prev => prev + 1);
         }
       }, 1000);
     }
@@ -73,14 +102,14 @@ const PomodoroTimer = () => {
         <meta name="description" content="focus sessions" />
         <meta name="keywords" content="focus, actionote, personal" />
       </Helmet>
-      <section className="flex w-full scrollbar-hidden h-fit flex-col items-center justify-start gap-5 pt-10">
+      <section className="flex w-full h-fit flex-col items-center justify-start gap-5 pt-10">
         <div className="w-[95vw] lg:w-[90vw] h-fit py-6 rounded-lg shadow-lg bg-white dark:bg-[#282828] dark:text-white">
           <header className="ml-5 mb-8">
-            <h1 className="text-2xl font-bold">Actionote X Pomodo</h1>
+            <h1 className="text-4xl font-light text-[#39a2ff] ml-5">Pomodo</h1>
           </header>
 
           <form className="text-center z-50 flex flex-col w-full justify-center items-center">
-            <nav className="flex w-full justify-center items-center">
+            <nav className="flex w-full justify-center font-normal items-center">
               <p className="mb-4">
                 <span className="mr-2">I am Working on</span>
                 <input
@@ -112,24 +141,17 @@ const PomodoroTimer = () => {
                 <img
                   src={down}
                   alt="toggle"
-                  className={`w-6 h-6 mx-2 p-1 transform transition-transform duration-300 ${
-                    showForm ? "-rotate-90" : "rotate-0"
-                  }`}
+                  className={`w-6 h-6 mx-2 p-1 transform transition-transform duration-300 ${showForm ? "-rotate-90" : "rotate-0"}`}
                 />
               </div>
             </nav>
-            <div
-              className={`w-full px-44 flex justify-center items-center gap-2 overflow-hidden transform transition-all duration-700 ease-in-out ${
-                showForm ? "h-0" : "h-20"
-              }`}
-            >
-              <label htmlFor="">Rounds Break:</label>
+
+            <div className={`w-full px-44 flex justify-center items-center gap-2 overflow-hidden transform transition-all duration-700 ease-in-out ${showForm ? "h-0" : "h-20"}`}>
+              <label htmlFor="">Rounds Break(mins):</label>
               <input
                 type="number"
                 value={roundBreak}
-                onChange={(e) =>
-                  setRoundBreak(parseInt(e.target.value, 10) || 0)
-                }
+                onChange={(e) => setRoundBreak(parseInt(e.target.value, 10) || 0)}
                 placeholder="0"
                 className="w-16 p-2 rounded bg-[#ececec] dark:bg-[#363636] dark:text-white text-center border-none focus:outline-none "
               />
@@ -137,9 +159,7 @@ const PomodoroTimer = () => {
               <input
                 type="number"
                 value={sessionBreak}
-                onChange={(e) =>
-                  setSessionBreak(parseInt(e.target.value, 10) || 0)
-                }
+                onChange={(e) => setSessionBreak(parseInt(e.target.value, 10) || 0)}
                 placeholder="0"
                 className="w-16 p-2 rounded bg-[#ececec] dark:bg-[#363636] dark:text-white text-center border-none focus:outline-none "
               />
@@ -153,7 +173,7 @@ const PomodoroTimer = () => {
               />
             </div>
           </form>
-          {/*--------------------------- Clock -------------------------------------------------- */}
+
           <div className="flex select-none justify-center z-0 items-center gap-4">
             <div className=" text-[10em] lg:text-[18em] z-0 font-open leading-none pb-14 font-thin flex items-center">
               <span>{String(minutes).padStart(2, "0")}</span>
@@ -166,30 +186,31 @@ const PomodoroTimer = () => {
             <button
               onClick={handleStart}
               disabled={isRunning}
-              className={`w-full p-2 rounded focus:ring-2 ${
-                isRunning ? "bg-gray-400 cursor-not-allowed" : "bg-sky-blue"
-              } text-white text-lg font-bold`}
+              className={`w-full p-2 rounded focus:ring-2 ${isRunning ? "bg-gray-400 cursor-not-allowed" : "bg-sky-blue"} text-white text-lg font-bold`}
             >
               Start
             </button>
             <button
               onClick={handleReset}
               disabled={!isRunning}
-              className={`w-full p-2 rounded focus:ring-2 ${
-                !isRunning ? "bg-gray-400 cursor-not-allowed" : "bg-red-500"
-              } text-white text-lg font-bold`}
+              className={`w-full p-2 rounded focus:ring-2 ${!isRunning ? "bg-gray-400 cursor-not-allowed" : "bg-red-500"} text-white text-lg font-bold`}
             >
               Reset
             </button>
           </div>
+
+          {isLoading && <div>Loading...</div>}
+          {error && <div className="text-red-500">{error}</div>}
         </div>
-        {/* History */}
+
         <div className="w-[95vw] lg:w-[90vw] h-fit py-6 my-10 rounded-lg shadow-lg bg-white dark:bg-[#282828] dark:text-white">
-          <h1 className="text-2xl font-bold">History</h1>
+          <h1 className="text-2xl font-bold p-2 pl-5">History</h1>
           <ul>
-            <li>Session 1: {projectName}</li>
-            <li>Session 2: {projectName}</li>
-            <li>Session 3: {projectName}</li>
+            {history.map((session, index) => (
+              <li key={index} className="p-2 pl-5">
+                {session.title} - {session.duration}
+              </li>
+            ))}
           </ul>
         </div>
       </section>

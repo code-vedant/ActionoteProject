@@ -17,10 +17,13 @@ import Calendar from './Components/Calendars/Calendar.jsx';
 import NotesHome from './Components/Notes/NotesHome.jsx';
 import DrawHome from './Components/DrawCanvas/DrawHome.jsx';
 import DiaryHome from './Components/Diary/DiaryHome.jsx';
-import NotesNew from './Components/Notes/NotesNew.jsx';
+import NotesNew from './Components/Notes/NotePage.jsx';
 import TodoPage from './Components/Todo/TodoHome.jsx';
 import CalendarPage from './Components/Calendars/Calendar.jsx';
 import DashboardHome from './Pages/DashboardHome.jsx';
+import TagPage from './Components/tags/TagPage.jsx';
+import NotePage from './Components/Notes/NotePage.jsx';
+import ProfilePage from './Components/Profile/ProfilePage.jsx';
 
 const router = createBrowserRouter([
   {
@@ -53,6 +56,10 @@ const router = createBrowserRouter([
         element: <DashboardHome/>
       },
       {
+        path: '/dashboard/profile',
+        element: <ProfilePage/>
+      },
+      {
         path: '/dashboard/draw',
         element: <DrawHome/>
       },
@@ -77,16 +84,16 @@ const router = createBrowserRouter([
         element: <NotesHome/>
       },
       {
-        path: '/dashboard/notes/new',
-        element: <NotesNew/>
-      },
-      {
         path: '/dashboard/notes/:id',
-        element: <NotesNew/>
+        element: <NotePage/>
       },
       {
         path: '/dashboard/diary',
         element: <DiaryHome/>
+      },
+      {
+        path: '/dashboard/tags',
+        element: <TagPage/>
       }
     ]
   }

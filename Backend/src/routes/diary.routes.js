@@ -1,12 +1,7 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import {
-    saveDiaryEntry,
-    getDiaryEntryByDate,
-    deleteDiaryEntryByDate,
-    getUserDiaryEntries,
-    getAllExceptToday,
-    getTodaysEntry
+    saveDiaryEntry, getDiaryEntryByDate, deleteDiaryEntryByDate, getTodaysEntry, getUserDiaryEntriesExceptToday
 } from "../controllers/diary.controller.js";
 
 const diaryRouter = Router();
@@ -19,8 +14,6 @@ diaryRouter.route("/delete/:date").delete(verifyJWT, deleteDiaryEntryByDate);
 
 diaryRouter.route("/today").get(verifyJWT, getTodaysEntry);
 
-diaryRouter.route("/userall").get(verifyJWT, getUserDiaryEntries);
-
-diaryRouter.route("/user").get(verifyJWT, getAllExceptToday); 
+diaryRouter.route("/user").get(verifyJWT, getUserDiaryEntriesExceptToday); 
 
 export default diaryRouter;

@@ -4,18 +4,14 @@ const URL = import.meta.env.VITE_BASE_URL + "/draw";
 
 const DrawService = {
     // Method to save or update a drawing
-    saveDrawing: async (data,accessToken) => {
-        console.log(data,accessToken);
-        
+    saveDrawing: async (data, accessToken) => {
         try {
             const response = await axios.post(`${URL}/save`, data, {
                 headers: {
-                    "Content-Type": "multipart/form-data",
+                    "Content-Type": "application/json",
                     Authorization: `Bearer ${accessToken}`,
                 },
             });
-            console.log("aaaaaaaaaaaaaaaaaaaaaaaaa");
-            
             return response.data;
         } catch (error) {
             throw new Error("Error saving drawing: " + error.message);

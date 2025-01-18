@@ -41,10 +41,13 @@ const PomodoroSchema = new Schema({
     type: Boolean,
     default: false
   },
+  completedAt: {
+    type: Date
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
-
-module.exports = mongoose.model('Pomodoro', PomodoroSchema);
+ 
+export default mongoose.model('Pomodoro', PomodoroSchema);

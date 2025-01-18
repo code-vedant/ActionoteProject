@@ -10,7 +10,6 @@ const tagsSchema = new Schema({
         type: String,
         unique: true
     },
-    description: String,
     color: {
         type: String,
         validate: {

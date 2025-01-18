@@ -19,7 +19,7 @@ const UserSchema = new Schema(
     },
     avatar: {
       type: String,
-      default: "https://avatar.iran.liara.run/public",
+      default: "",
     },
     password: {
       type: String,
@@ -34,14 +34,25 @@ const UserSchema = new Schema(
   }
 );
 
-// Hash password before saving
+// Middleware to hash password before saving
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-UserSchema.methods.isPasswordCorrect = async function(password) {
+// Middleware to fetch default avatar if none is provided
+UserSchema.pre("save", async function (next) {
+  if (!this.avatar && this.isNew) {
+    const seed = encodeURIComponent(this.email || this._id.toString());
+    const avatarUrl = `https://api.dicebear.com/6.x/adventurer/svg?seed=${seed}`;
+    this.avatar = avatarUrl;  // Store the avatar URL
+  }
+  next();
+});
+
+// Instance methods
+UserSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
@@ -59,6 +70,7 @@ UserSchema.methods.generateAccessToken = function () {
     }
   );
 };
+
 UserSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {
@@ -71,4 +83,4 @@ UserSchema.methods.generateRefreshToken = function () {
   );
 };
 
-export const User = mongoose.models.User || mongoose.model('User', UserSchema);
+export const User = mongoose.models.User || mongoose.model("User", UserSchema);

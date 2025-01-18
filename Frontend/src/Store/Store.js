@@ -2,7 +2,6 @@ import { configureStore } from "@reduxjs/toolkit";
 import authSlice, { login as loginAction } from "./auth.store.js";
 import todoSlice from "./todo.store.js";
 import tagsSlice from "./tags.store.js";
-import flowSlice from "./flow.store.js";
 import diarySlice from "./diary.store.js";
 import notesSlice from "./notes.store.js";
 import drawSlice from "./draw.store.js";
@@ -13,7 +12,6 @@ const store = configureStore({
     auth: authSlice,
     todo: todoSlice,
     tags: tagsSlice,
-    flow: flowSlice,
     diary: diarySlice,
     notes: notesSlice,
     draw: drawSlice,
@@ -21,10 +19,10 @@ const store = configureStore({
   },
 });
 
-// Load initial state from localStorage
-const accessToken = localStorage.getItem("accessToken");
-const refreshToken = localStorage.getItem("refreshToken");
-const storedUser = localStorage.getItem("user");
+// Load initial state from sessionStorage
+const accessToken = sessionStorage.getItem("accessToken");
+const refreshToken = sessionStorage.getItem("refreshToken");
+const storedUser = sessionStorage.getItem("user");
 
 if (accessToken && refreshToken && storedUser) {
   try {
@@ -38,7 +36,7 @@ if (accessToken && refreshToken && storedUser) {
     );
   } catch (error) {
     console.error("Failed to parse stored user data:", error);
-    localStorage.clear();
+    sessionStorage.clear();
   }
 }
 

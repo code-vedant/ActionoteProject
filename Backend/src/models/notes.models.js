@@ -10,9 +10,9 @@ const notesSchema = new Schema(
       type: String,
       required: true,
     },
-    tags: [{  // Make it an array of ObjectIds to reference multiple tags
+    tags: [{
       type: Schema.Types.ObjectId,
-      ref: 'Tag', // Referencing the Tag model
+      ref: 'Tag',
     }],
     owner: {
       type: Schema.Types.ObjectId,
@@ -21,7 +21,7 @@ const notesSchema = new Schema(
     },
   },
   {
-    timestamps: true, // Automatically adds createdAt and updatedAt fields
+    timestamps: true,
   }
 );
 

@@ -19,13 +19,9 @@ const AuthService = {
       }
     }
   },
-  login: async ({email,password}) => {
+  login: async ({ email, password }) => {
     try {
-      console.log(email, password);
-
-      const response = await axios.post(`${URL}/login`, {email,password});
-      console.log(response.data);
-      
+      const response = await axios.post(`${URL}/login`, { email, password });
       return response.data;
     } catch (error) {
       if (error.response) {
@@ -46,7 +42,55 @@ const AuthService = {
           },
         }
       );
-
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error("Error message:", error.response.data.message);
+      } else {
+        console.error("Error:", error.message);
+      }
+    }
+  },
+  updateProfile: async (data, accessToken) => {
+    try {
+      const response = await axios.patch(`${URL}/update-account`, data, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error("Error message:", error.response.data.message);
+      } else {
+        console.error("Error:", error.message);
+      }
+    }
+  },
+  changePassword: async (data, accessToken) => {
+    try {
+      const response = await axios.post(`${URL}/change-password`, data, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error("Error message:", error.response.data.message);
+      } else {
+        console.error("Error:", error.message);
+      }
+    }
+  },
+  updateAvatar: async (data, accessToken) => {
+    try {
+      const response = await axios.patch(`${URL}/avatar`, data, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
       return response.data;
     } catch (error) {
       if (error.response) {

@@ -19,7 +19,12 @@ const DiarySchema = new Schema(
   { timestamps: true }
 );
 
-// compound index to ensure that each user can only have one entry per date.
 DiarySchema.index({ date: 1, owner: 1 }, { unique: true });
+
+DiarySchema.pre('save', function (next) {
+  const diary = this;
+  diary.date = new Date(diary.date.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
+  next();
+});
 
 export default mongoose.model("Diary", DiarySchema);

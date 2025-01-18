@@ -3,7 +3,6 @@ import axios from "axios";
 const URL = import.meta.env.VITE_BASE_URL + "/diary";
 
 const DiaryService = {
-  // Method to get all diaries of a user
   getDiaries: async (accessToken) => {
     try {
       const response = await axios.get(`${URL}/user`, {
@@ -18,7 +17,6 @@ const DiaryService = {
     }
   },
 
-  // Method to get today's diary
   getTodayDiary: async (accessToken) => {
     try {
       const response = await axios.get(`${URL}/today`, {
@@ -33,12 +31,9 @@ const DiaryService = {
     }
   },
 
-  // Method to get diary by date
   getDiaryByDate: async (date, accessToken) => {
     try {
-      // Format date to YYYY-MM-DD if necessary (depending on how the backend expects it)
-      const formattedDate = new Date(date).toISOString().split('T')[0]; // '2024-12-21'
-      const response = await axios.get(`${URL}/${formattedDate}`, {
+      const response = await axios.get(`${URL}/bydate/${date}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -50,7 +45,6 @@ const DiaryService = {
     }
   },
 
-  // Method to save a diary
   saveDiary: async (data, accessToken) => {
     try {
       const response = await axios.post(`${URL}/save`, data, {
@@ -66,12 +60,9 @@ const DiaryService = {
     }
   },
 
-  // Method to delete a diary
   deleteDiary: async (date, accessToken) => {
     try {
-      // Format date to YYYY-MM-DD if necessary
-      const formattedDate = new Date(date).toISOString().split('T')[0]; // '2024-12-21'
-      const response = await axios.delete(`${URL}/delete/${formattedDate}`, {
+      const response = await axios.delete(`${URL}/delete/${date}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

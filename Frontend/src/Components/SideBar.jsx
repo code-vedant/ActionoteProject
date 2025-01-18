@@ -11,7 +11,7 @@ import diaryblueint from "../assets/Icons/diaryblueint.png";
 import drawingblueint from "../assets/Icons/drawingblueint.png";
 
 function SideBar({ viewSidebar, handleview }) {
-  const [activeIndex, setActiveIndex] = useState(0); // Track the active item
+  const [activeIndex, setActiveIndex] = useState(0);
   const list = [
     { title: "Home", icon: calendarblueint, route: "/dashboard" },
     { title: "To-Do Lists", icon: todoblue, route: "/dashboard/todo" },
@@ -54,11 +54,11 @@ function SideBar({ viewSidebar, handleview }) {
         </div>
       </button>
       <div
-        className={`fixed top-0 left-0 h-full w-[85vw] md:w-56 bg-[#ffffff] dark:bg-[#1a1a1a] pt-16 dark:text-white z-10 transform duration-300 ${
+        className={`fixed top-0 left-0 h-screen w-[85vw] md:w-56 bg-[#ffffff] dark:bg-[#2a2a2a] pt-16 dark:text-white z-10 transform duration-300 ${
           viewSidebar ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="w-full h-full flex flex-col justify-start gap-3 items-center pt-5">
+        <div className="w-full h-screen pb-16 flex flex-col justify-start gap-3 items-center pt-5">
           {list.map((item, index) => (
             <Link
               className="w-full h-fit flex justify-center"
@@ -67,23 +67,23 @@ function SideBar({ viewSidebar, handleview }) {
               onClick={() => setActiveIndex(index)}
             >
               <div
-                className={`w-11/12 h-10 flex justify-between items-center px-5 rounded-xl ${
+                className={`w-11/12 h-10 flex justify-starat items-center gap-3 px-5 rounded-full ${
                   activeIndex === index
                     ? "bg-[#e5e6e8] dark:bg-[#393939]"
                     : "bg-[#f7f8fa] dark:bg-[#1d1d1d]"
                 }`}
               >
-                <div className="imgHolder w-8 h-8">
-                  <img src={item.icon} alt={item.title} />
+                <div className="imgHolder w-8 h-8 flex justify-center items-center">
+                  <img className="w-4/5 h-4/5" src={item.icon} alt={item.title} />
                 </div>
-                <h1 className="text-2xl">{item.title}</h1>
+                <h1 className="text-2xl font-light">{item.title}</h1>
               </div>
             </Link>
           ))}
           <div className="utils w-full h-full flex flex-col justify-end items-center gap-4 pb-4">
             <button
               onClick={handleThemeSwitch}
-              className="w-11/12 h-10 rounded-xl bg-[#39a2ff] text-xl font-medium transition duration-300 ease-in-out transform hover:scale-105 shadow-md"
+              className="w-11/12 h-10 rounded-full border-[1px] border-[#39a2ff] text-xl font-light transition duration-200 ease-in-out transform hover:bg-[#39a2ff] hover:shadow-sm"
               aria-label="Toggle theme"
             >
               Theme

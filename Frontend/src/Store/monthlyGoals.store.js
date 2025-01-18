@@ -7,7 +7,10 @@ const monthlyGoalsSlice = createSlice({
   },
   reducers: {
     addGoal: (state, action) => {
-      state.goals.push(action.payload);
+      const existingGoal = state.goals.find((goal) => goal.id === action.payload.id);
+      if (!existingGoal) {
+        state.goals.push(action.payload);
+      }
     },
     removeGoal: (state, action) => {
       state.goals = state.goals.filter((goal) => goal.id !== action.payload);

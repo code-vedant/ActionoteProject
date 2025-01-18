@@ -53,10 +53,6 @@ const CalendarSchema = new Schema(
       enum: ["confirmed", "tentative", "canceled"],
       default: "confirmed",
     },
-    todo:{
-      type: Schema.Types.ObjectId,
-      ref: "Todo",
-    }
   },
   { timestamps: true }
 );

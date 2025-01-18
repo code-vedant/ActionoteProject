@@ -2,7 +2,15 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import Diary from "../models/diary.models.js";
+import moment from 'moment-timezone';
 
+// Helper to parse and convert date to UTC midnight in Asia/Kolkata
+const parseDateInIST = (dateString) => {
+  const istDate = moment.tz(dateString, 'YYYY-MM-DD', 'Asia/Kolkata').startOf('day').toDate(); // Midnight in IST
+  return istDate;
+};
+
+// Save or update diary entry
 const saveDiaryEntry = asyncHandler(async (req, res) => {
   const { date, entry } = req.body;
 
@@ -10,14 +18,10 @@ const saveDiaryEntry = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Date is required.");
   }
 
-  const dateObj = new Date(date);
-  if (isNaN(dateObj)) {
-    throw new ApiError(400, "Invalid date format.");
-  }
+  // Convert the date to UTC midnight in Asia/Kolkata timezone
+  const parsedDate = parseDateInIST(date);
 
-  dateObj.setHours(0, 0, 0, 0);
-
-  let diaryEntry = await Diary.findOne({ date: dateObj, owner: req.user._id });
+  let diaryEntry = await Diary.findOne({ date: parsedDate, owner: req.user._id });
 
   if (diaryEntry) {
     diaryEntry.entry = entry || "";
@@ -28,7 +32,7 @@ const saveDiaryEntry = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, diaryEntry, "Diary entry updated successfully."));
   } else {
     diaryEntry = await Diary.create({
-      date: dateObj,
+      date: parsedDate,
       entry: entry || "",
       owner: req.user._id,
     });
@@ -38,6 +42,7 @@ const saveDiaryEntry = asyncHandler(async (req, res) => {
   }
 });
 
+// Get diary entry by date
 const getDiaryEntryByDate = asyncHandler(async (req, res) => {
   const { date } = req.params;
 
@@ -45,17 +50,11 @@ const getDiaryEntryByDate = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Date is required.");
   }
 
-  // Parse date without time component for accurate matching
-  const dateStart = new Date(date);
-  const dateEnd = new Date(date);
-  dateEnd.setHours(23, 59, 59, 999); // End of the day
-
-  if (isNaN(dateStart)) {
-    throw new ApiError(400, "Invalid date format. Please use 'YYYY-MM-DD'.");
-  }
+  // Convert the date to UTC midnight in Asia/Kolkata timezone
+  const parsedDate = parseDateInIST(date);
 
   const diaryEntry = await Diary.findOne({
-    date: { $gte: dateStart, $lte: dateEnd },
+    date: parsedDate,
     owner: req.user._id,
   });
 
@@ -70,6 +69,7 @@ const getDiaryEntryByDate = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, diaryEntry, "Diary entry retrieved successfully."));
 });
 
+// Delete diary entry by date
 const deleteDiaryEntryByDate = asyncHandler(async (req, res) => {
   const { date } = req.params;
 
@@ -77,17 +77,11 @@ const deleteDiaryEntryByDate = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Date is required.");
   }
 
-  // Parse date without time component for accurate matching
-  const dateStart = new Date(date);
-  const dateEnd = new Date(date);
-  dateEnd.setHours(23, 59, 59, 999); // End of the day
-
-  if (isNaN(dateStart)) {
-    throw new ApiError(400, "Invalid date format. Please use 'YYYY-MM-DD'.");
-  }
+  // Convert the date to UTC midnight in Asia/Kolkata timezone
+  const parsedDate = parseDateInIST(date);
 
   const diaryEntry = await Diary.findOneAndDelete({
-    date: { $gte: dateStart, $lte: dateEnd },
+    date: parsedDate,
     owner: req.user._id,
   });
 
@@ -100,13 +94,14 @@ const deleteDiaryEntryByDate = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Diary entry deleted successfully."));
 });
 
+// Get today's diary entry
 const getTodaysEntry = asyncHandler(async (req, res) => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const istToday = moment.tz(today, 'Asia/Kolkata').startOf('day').toDate(); // Midnight in IST
 
   const diaryEntry = await Diary.findOne({
     owner: req.user._id,
-    date: today,
+    date: istToday,
   });
 
   if (!diaryEntry) {
@@ -120,21 +115,14 @@ const getTodaysEntry = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, diaryEntry, "Today's diary entry retrieved successfully."));
 });
 
-const getUserDiaryEntries = asyncHandler(async (req, res) => {
-  const diaryEntries = await Diary.find({ owner: req.user._id }).sort({ date: -1 });
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, diaryEntries, "All diary entries retrieved successfully."));
-});
-
-const getAllExceptToday = asyncHandler(async (req, res) => {
+// Get all diary entries except today
+const getUserDiaryEntriesExceptToday = asyncHandler(async (req, res) => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const istToday = moment.tz(today, 'Asia/Kolkata').startOf('day').toDate(); // Midnight in IST
 
   const diaryEntries = await Diary.find({
     owner: req.user._id,
-    date: { $ne: today },
+    date: { $ne: istToday }, // Exclude today's date
   }).sort({ date: -1 });
 
   return res
@@ -142,4 +130,10 @@ const getAllExceptToday = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, diaryEntries, "All diary entries except today's retrieved successfully."));
 });
 
-export { saveDiaryEntry, getDiaryEntryByDate, deleteDiaryEntryByDate, getTodaysEntry, getUserDiaryEntries, getAllExceptToday };
+export {
+  saveDiaryEntry,
+  getDiaryEntryByDate,
+  deleteDiaryEntryByDate,
+  getTodaysEntry,
+  getUserDiaryEntriesExceptToday,
+};

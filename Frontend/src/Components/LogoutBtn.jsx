@@ -35,7 +35,7 @@ function LogoutBtn() {
     <div>
       <button 
         onClick={handleLogout} 
-        className="text-xl bg-red-600 w-11/12 h-10 rounded-xl font-medium text-white">
+        className="text-xl border-[1px] border-red-600 w-11/12 h-10 rounded-full font-light text-black dark:text-white transition duration-200 ease-in-out transform hover:bg-red-500">
         Logout
       </button>
     </div>

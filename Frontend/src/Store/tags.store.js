@@ -6,14 +6,24 @@ const tagsSlice = createSlice({
     tags: [],
   },
   reducers: {
+    setTags: (state, action) => {
+      // Replace the existing tags array with the new one
+      state.tags = action.payload;
+    },
     addTag: (state, action) => {
-      state.tags.push(action.payload);
+      // Avoid adding duplicates
+      const exists = state.tags.some((tag) => tag._id === action.payload._id);
+      if (!exists) {
+        state.tags.push(action.payload);
+      }
     },
     removeTag: (state, action) => {
-      state.tags = state.tags.filter((tag) => tag.id !== action.payload);
+      // Remove tag by its ID
+      state.tags = state.tags.filter((tag) => tag._id !== action.payload);
     },
     updateTag: (state, action) => {
-      const index = state.tags.findIndex((tag) => tag.id === action.payload.id);
+      // Update tag if it exists
+      const index = state.tags.findIndex((tag) => tag._id === action.payload._id);
       if (index !== -1) {
         state.tags[index] = action.payload;
       }
@@ -21,5 +31,5 @@ const tagsSlice = createSlice({
   },
 });
 
-export const { addTag, removeTag, updateTag } = tagsSlice.actions;
+export const { setTags, addTag, removeTag, updateTag } = tagsSlice.actions;
 export default tagsSlice.reducer;

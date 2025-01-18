@@ -6,7 +6,7 @@ import dotsWhite from "../../assets/Icons/dotsWhite.png";
 import { useTheme } from "@/context/ThemeContext";
 import { useSelector } from "react-redux";
 
-function DiaryOld({ diary ,handleDelete}) {
+function DiaryOld({ diary}) {
   const [entry, setEntry] = useState(diary.entry || "");
   const [date, setDate] = useState(new Date(diary.date));
   const [isEditing, setIsEditing] = useState(false);
@@ -18,6 +18,8 @@ function DiaryOld({ diary ,handleDelete}) {
       alert("Please fill in both the date and your diary entry.");
       return;
     }
+
+    const accessToken = useSelector((state) => state.auth.accessToken);
   
     const updatedDiary = { date, entry };
   
@@ -31,9 +33,27 @@ function DiaryOld({ diary ,handleDelete}) {
     }
   };
 
+  const formatDate = (date) => {
+    const options = { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" };
+    const formattedDate = date.toLocaleDateString("en-IN", options);
+    const [day, month, year] = formattedDate.split("/");
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleDelete = async () => {
+    try {
+      setErrorMessage(null);
+      const formattedDate = formatDate(date);
+      await DiaryService.deleteDiary(formattedDate, accessToken);
+      setEntry("");
+    } catch (error) {
+      setErrorMessage(error.message || "Error deleting today's entry.");
+    }
+  };
+
 
   return (
-    <div className="w-[95vw] lg:w-[50vw] h-[95vh] relative p-4 bg-[#ffffff] dark:bg-[#1b1b1b] shadow-md shadow-[#333] rounded-md flex flex-col lg:ml-5 justify-start items-center gap-3 mb-5">
+    <div className="w-[95vw] lg:w-[50vw] h-[95vh] relative p-4 bg-[#ffffff] dark:bg-[#1b1b1b] shadow-sm shadow-[#333] rounded-md flex flex-col lg:ml-5 justify-start items-center gap-3 mb-5">
       {/* Date Picker */}
       <div className="w-full text-center border-b-2 pb-1 border-b-[#1c1c1c] dark:border-b-[#f7f8f9]">
         <DatePicker
@@ -68,7 +88,7 @@ function DiaryOld({ diary ,handleDelete}) {
               </button>
               <button
                 className="block w-full py-2 hover:bg-gray-200 dark:hover:bg-gray-700"
-                onClick={handleDelete(diary.date)}
+                onClick={handleDelete}
               >
                 Delete
               </button>

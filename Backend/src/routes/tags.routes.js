@@ -23,6 +23,6 @@ router.get("/:tagId", verifyJWT, getTagById);
 router.put("/:tagId", verifyJWT, updateTag);
 
 // Delete a tag
-router.delete("/:tagId", verifyJWT, deleteTag);
+router.delete("/delete/:tagId", verifyJWT, deleteTag);
 
 export default router;

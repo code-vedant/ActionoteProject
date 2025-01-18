@@ -20,18 +20,15 @@ const processBase64Drawing = (drawing) => {
 
 // Save a new drawing
 const saveDrawing = asyncHandler(async (req, res) => {
-  const { title, description, tags, drawing } = req.body;
+  const { drawing } = req.body;
 
-  if (!title || !drawing) {
-    throw new ApiError(400, "Title and drawing are required.");
+  if (!drawing) {
+    throw new ApiError(400, "Drawing is required.");
   }
 
   const imageBuffer = processBase64Drawing(drawing);
 
   const newDrawing = await Draw.create({
-    title,
-    description,
-    tags,
     drawing: imageBuffer.toString("base64"), // Save base64 string
     creator: req.user._id,
   });
@@ -43,23 +40,18 @@ const saveDrawing = asyncHandler(async (req, res) => {
 
 // Update an existing drawing
 const updateDrawing = asyncHandler(async (req, res) => {
-  const { drawId, title, description, tags, drawing } = req.body;
+  const { drawId, drawing } = req.body;
 
   if (!drawId) {
     throw new ApiError(400, "Drawing ID is required for updating.");
   }
 
-  if (!title && !description && !tags && !drawing) {
-    throw new ApiError(400, "At least one field must be updated.");
+  if (!drawing) {
+    throw new ApiError(400, "Drawing is required.");
   }
 
   const updateData = { updatedAt: new Date() };
-  if (title) updateData.title = title;
-  if (description) updateData.description = description;
-  if (tags) updateData.tags = tags;
-  if (drawing) {
-    updateData.drawing = processBase64Drawing(drawing).toString("base64");
-  }
+  updateData.drawing = processBase64Drawing(drawing).toString("base64");
 
   const updatedDrawing = await Draw.findByIdAndUpdate(drawId, updateData, {
     new: true,
@@ -117,7 +109,7 @@ const deleteDrawing = asyncHandler(async (req, res) => {
     throw new ApiError(403, "You do not have permission to delete this drawing.");
   }
 
-  await drawing.remove();
+  await drawing.deleteOne();
 
   return res
     .status(200)

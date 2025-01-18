@@ -30,10 +30,6 @@ const TodoSchema = new Schema(
     completedAt: {
       type: Date,
     },
-    recurring: {
-      type: Boolean,
-      default: false,
-    },
     description: {
       type: String,
       default: "",

@@ -38,9 +38,9 @@ const updateNote = asyncHandler(async (req, res) => {
     throw new ApiError(403, "You do not have permission to update this note.");
   }
 
-  if (title) note.title = title;
-  if (content) note.content = content;
-  if (tags !== undefined) note.tags = tags; // Update tags if provided
+  note.title = title || note.title;
+  note.content = content || note.content;
+  note.tags = tags !== undefined ? tags : note.tags;
 
   await note.save();
 
@@ -105,6 +105,5 @@ const getUserNotes = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, notes, "User notes retrieved successfully."));
 });
-
 
 export { createNote, getUserNotes, getNoteById, updateNote, deleteNote };

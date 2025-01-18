@@ -1,59 +1,98 @@
 import React, { useEffect, useState } from "react";
-import MonthlyGoalService from "../../Services/monthlyGoal.service.js"; // Adjust path as necessary
+import { useForm } from "react-hook-form";
+import Select from "react-select";
+import DatePicker from "react-datepicker";
+import { useTheme } from "@/context/ThemeContext";
+import MonthlyGoalService from "../../Services/monthlyGoal.service"; 
+import { useSelector } from "react-redux";
 
-const AddMonthlyGoalForm = ({
-  accessToken,
-  handleMntPopup,
-}) => {
-
-  console.log(accessToken);
-  
-  // Initialize the form data with the current month in YYYY-MM format
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    status: false,
-    month: new Date().toISOString().slice(0, 7), // Get the current month in YYYY-MM format
-    priority: "medium",
+const AddMonthlyGoalForm = ({ accessToken, handleMntPopup }) => {
+  const { register, handleSubmit, reset, setValue } = useForm({
+    defaultValues: {
+      title: "",
+      description: "",
+      status: false,
+      month: new Date().toISOString().slice(0, 7),
+      priority: "medium",
+      tags: [],
+    },
   });
+
+  const tags = useSelector((state) => state.tags.tags);
+  const tagsOptions = tags.map((tag) => ({
+    value: tag._id,
+    label: tag.name,
+  }));
+
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const handleKey = (event) => {
-      if (event.key === "Escape") {
-        handleMntPopup();
-      }
-    };
+  const statusOptions = [
+    { value: false, label: "Pending" },
+    { value: true, label: "Completed" },
+  ];
 
-    window.addEventListener("keydown", handleKey);
-    return () => {
-      window.removeEventListener("keydown", handleKey);
-    };
-  }, [handleMntPopup]);
+  const priorityOptions = [
+    { value: "low", label: "Low" },
+    { value: "medium", label: "Medium" },
+    { value: "high", label: "High" },
+  ];
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const customStyles = {
+    control: (provided, state) => ({
+      ...provided,
+      backgroundColor: theme === "dark" ? "#282828" : "#ffffff",
+      borderColor: state.isFocused ? "#39a2ff" : "#e2e8f0",
+      color: theme === "dark" ? "#fff" : "#000",
+      borderRadius: "18px",
+      padding: "3px",
+      boxShadow: state.isFocused ? "0 0 0 2px #39a2ff" : "none",
+    }),
+    menu: (provided) => ({
+      ...provided,
+      backgroundColor: theme === "dark" ? "#282828" : "#ffffff",
+      borderRadius: "5px",
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isFocused ? "#39a2ff" : "transparent",
+      color: state.isFocused ? "#fff" : theme === "dark" ? "#e2e8f0" : "#000",
+      borderRadius: "18px",
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: theme === "dark" ? "#fff" : "#000",
+    }),
+    multiValue: (provided) => ({
+      ...provided,
+      backgroundColor: theme === "dark" ? "#3c3c3c" : "#ececec",
+      borderRadius: "18px",
+    }),
+    multiValueLabel: (provided) => ({
+      ...provided,
+      color: theme === "dark" ? "#ececec" : "#000",
+    }),
+    multiValueRemove: (provided) => ({
+      ...provided,
+      color: theme === "dark" ? "#ececec" : "#000",
+      ":hover": {
+        backgroundColor: theme === "dark" ? "#ff4d4d" : "#e11d48",
+        color: "#fff",
+      },
+    }),
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setLoading(true);
     setError(null);
 
     try {
-      const newGoal = await MonthlyGoalService.addGoal(formData, accessToken);
-      setFormData({
-        title: "",
-        description: "",
-        status: "pending",
-        month: new Date().toISOString().slice(0, 7), // Reset to current month
-        priority: "medium",
-      });
+      const payload = { ...data, tags: data.tags.map((tag) => tag.value) };
+      await MonthlyGoalService.addGoal(payload, accessToken);
+      reset();
+      handleMntPopup();
     } catch (err) {
       setError("Failed to add the goal. Please try again.");
     } finally {
@@ -61,124 +100,101 @@ const AddMonthlyGoalForm = ({
     }
   };
 
+  useEffect(() => {
+    setValue("month", selectedMonth.toISOString().slice(0, 7));
+  }, [selectedMonth, setValue]);
+
   return (
     <form
-      onSubmit={handleSubmit}
-      className="w-[90vw] lg:w-[40vw] bg-[#ffffff] dark:bg-[#282828] p-2 rounded-lg shadow-md flex flex-col justify-start items-start"
+      onSubmit={handleSubmit(onSubmit)}
+      className="w-[90vw] lg:w-[40vw] bg-[#ffffff] dark:bg-[#282828] p-4 rounded-lg shadow-md flex flex-col space-y-4"
     >
-      <h2 className="text-xl font-semibold text-center w-full text-gray-600 dark:text-white">
+      <h2 className="text-xl font-semibold text-center text-gray-600 dark:text-white">
         Add Monthly Goal
       </h2>
 
-      {error && <div className="w-full text-red-500 text-sm my-2">{error}</div>}
+      {error && <div className="text-red-500 text-sm">{error}</div>}
 
-      <div className="w-full">
-        <label
-          htmlFor="title"
-          className="text-gray-600 dark:text-white mb-1 block"
-        >
+      <div className="flex flex-col">
+        <label htmlFor="title" className="text-gray-600 dark:text-white">
           Title <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="title"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          required
-          className="w-full bg-[#ececec] dark:bg-[#363636] dark:text-white border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+          placeholder="Enter title"
+          className="w-full px-3 py-2 border rounded-2xl border-gray-300 dark:bg-[#363636] dark:text-white"
+          {...register("title", { required: "Title is required" })}
         />
       </div>
 
-      <div className="w-full">
-        <label
-          htmlFor="description"
-          className="text-gray-600 dark:text-white mb-1 block"
-        >
+      <div className="flex flex-col">
+        <label htmlFor="description" className="text-gray-600 dark:text-white">
           Description
         </label>
         <textarea
           id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          className="w-full bg-[#ececec] dark:bg-[#363636] dark:text-white border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+          placeholder="Enter description"
+          className="w-full px-3 py-2 border min-h-[100px] rounded-2xl border-gray-300 dark:bg-[#363636] dark:text-white"
+          {...register("description")}
         />
       </div>
 
-      <div className="w-full">
-        <label
-          htmlFor="status"
-          className="text-gray-600 dark:text-white mb-1 block"
-        >
-          Status
-        </label>
-        <select
-          id="status"
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          className="w-full bg-[#ececec] dark:bg-[#363636] dark:text-white border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-        >
-          <option value="pending">Pending</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
-
-      <div className="w-full">
-        <label
-          htmlFor="month"
-          className="text-gray-600 dark:text-white mb-1 block"
-        >
-          Month <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="month"
-          id="month"
-          name="month"
-          value={formData.month}
-          onChange={handleChange}
-          required
-          className="w-full bg-[#ececec] dark:bg-[#363636] dark:text-white border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+      <div className="flex flex-col">
+        <label className="text-gray-600 dark:text-white">Status</label>
+        <Select
+          options={statusOptions}
+          styles={customStyles}
+          defaultValue={statusOptions[0]}
+          onChange={(selected) => setValue("status", selected.value)}
         />
       </div>
 
-      <div className="w-full">
-        <label
-          htmlFor="priority"
-          className="text-gray-600 dark:text-white mb-1 block"
-        >
-          Priority
-        </label>
-        <select
-          id="priority"
-          name="priority"
-          value={formData.priority}
-          onChange={handleChange}
-          className="w-full bg-[#ececec] dark:bg-[#363636] dark:text-white border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-        >
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
+      <div className="flex flex-col">
+        <label className="text-gray-600 dark:text-white">Priority</label>
+        <Select
+          options={priorityOptions}
+          styles={customStyles}
+          defaultValue={priorityOptions[1]}
+          onChange={(selected) => setValue("priority", selected.value)}
+        />
       </div>
 
-      <div className="flex w-full justify-between items-center py-2 gap-2 mt-5">
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full bg-[#39a2ff] text-white py-2 px-4 rounded-md shadow  focus:outline-none focus:ring-2 focus:ring-offset-2 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-        >
-          {loading ? "Adding..." : "Add Goal"}
-        </button>
+      <div className="flex flex-col">
+        <label className="text-gray-600 dark:text-white">Month</label>
+        <DatePicker
+          selected={selectedMonth}
+          onChange={(date) => setSelectedMonth(date)}
+          dateFormat="yyyy-MM"
+          showMonthYearPicker
+          className="w-full px-3 py-2 border rounded-2xl border-gray-300 dark:bg-[#363636] dark:text-white"
+        />
+      </div>
+      <div className="w-full mb-4">
+        <label className="block text-gray-600 dark:text-white mb-1">Tags</label>
+        <Select
+          isMulti
+          name="tags"
+          options={tagsOptions}
+          styles={customStyles}
+          onChange={(selected) => setValue("tags", selected)}
+        />
+      </div>
+
+      <div className="flex justify-between gap-4">
         <button
           type="button"
-          disabled={loading}
+          className="w-full py-2 border border-black dark:border-white text-black dark:text-white rounded-full hover:bg-red-400 hover:border-red-400 hover:text-white"
           onClick={handleMntPopup}
-          className={`w-full bg-[#e64040] text-white py-2 px-4 rounded-md shadow  focus:outline-none focus:ring-2 focus:ring-offset-2 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          {loading ? "Canceling.." : "Cancel"}
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="w-full py-2 bg-[#39a2ff] text-white rounded-full hover:bg-blue-600"
+          disabled={loading}
+        >
+          {loading ? "Adding..." : "Add Goal"}
         </button>
       </div>
     </form>
