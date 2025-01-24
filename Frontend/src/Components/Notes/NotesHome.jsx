@@ -105,7 +105,7 @@ function NotesHome() {
             <Link
               to={`/dashboard/notes/${encrypt(note?._id)}`}
               className="w-fit h-fit"
-              key={index}
+              key={note?._id || index}
             >
               <NotesBox note={note} bgColor={getRandomBgColor()} />
             </Link>

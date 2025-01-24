@@ -2,15 +2,23 @@ import { Router } from "express";
 import {
   saveCalendarEvent,
   getUserCalendarEvents,
+  editCalendarEvent,
+  deleteCalendarEvent,
 } from "../controllers/calendar.controller.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 
 const router = Router();
 
-// Route to get all calendar events for the logged-in user
-router.route("/").get(verifyJWT, getUserCalendarEvents);
+router.use(verifyJWT);
 
-// Route to save or update a calendar event
-router.route("/").post(verifyJWT, saveCalendarEvent);
+router
+  .route("/")
+  .get(getUserCalendarEvents)
+  .post(saveCalendarEvent); 
+
+router
+  .route("/:id")
+  .put(editCalendarEvent)   
+  .delete(deleteCalendarEvent);
 
 export default router;

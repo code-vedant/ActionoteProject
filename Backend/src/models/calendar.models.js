@@ -22,37 +22,6 @@ const CalendarSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    location: {
-      type: String,
-    },
-    allDay: {
-      type: Boolean,
-      default: false,
-    },
-    recurrence: {
-      type: String,
-      enum: ["none", "daily", "weekly", "monthly"],
-      default: "none",
-    },
-    recurrenceEndDate: { type: Date },
-    color: {
-      type: String,
-      validate: {
-        validator: function (v) {
-          return /^#([0-9A-F]{3}){1,2}$/i.test(v);
-        },
-        message: (props) => `${props.value} is not a valid hex color!`,
-      },
-    },
-    reminder: {
-      type: Number,
-      default: 30,
-    },
-    status: {
-      type: String,
-      enum: ["confirmed", "tentative", "canceled"],
-      default: "confirmed",
-    },
   },
   { timestamps: true }
 );

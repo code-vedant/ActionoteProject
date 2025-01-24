@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import TinyRTE from "./RTE";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -7,7 +7,10 @@ import Select from "react-select";
 import NotesService from "@/Services/notes.service";
 import { useTheme } from "@/context/ThemeContext";
 import TagBar from "../tags/TagBar";
-import { decrypt } from "@/Binders/Encypt";
+import { decrypt, encrypt } from "@/Binders/Encypt";
+import PopupHolder from "../Popups/PopupHolder";
+import { Helmet } from "react-helmet";
+import { ClockLoader } from "react-spinners";
 
 function NotePage() {
   const { id } = useParams();
@@ -16,12 +19,12 @@ function NotePage() {
   const tags = useSelector((state) => state.tags.tags);
   const { theme } = useTheme();
   const [prevData, setPrevData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
   const [messagePopup, setMessagePopup] = useState(false);
   const [tagsOptions, setTagsOptions] = useState([]);
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [tagsValue, setTagsValue] = useState([]);
 
-  const { control, handleSubmit, setValue, reset } = useForm({
+  const { register, handleSubmit, setValue, reset } = useForm({
     defaultValues: {
       title: "",
       content: "",
@@ -29,40 +32,45 @@ function NotePage() {
     },
   });
 
-  const decryptedId = decrypt(id);
-
   useEffect(() => {
-    if (!prevData?.tags) return;
-    const options = tags.map((tag) => ({
-      value: tag._id,
-      label: tag.name,
-    }));
+    if (!tags) return;
+  
+    const options = tags.map((tag, index) => {
+      const tagId = tag?._id || `tag-id-${index}`;
+      const tagName = tag?.name || `Unknown-${index}`;
+  
+      return {
+        value: tagId,
+        label: tagName,
+        key: tagId,
+      };
+    });
+  
     setTagsOptions(options);
-
-    // Set the selected tags only after tagsOptions are populated
-    const selected = prevData.tags.map((tag) => ({
-      value: tag._id,
-      label: tag.name,
-    }));
-    setSelectedTags(selected);
-  }, [tags, prevData]); // Watch for changes in tags and prevData
+  }, [tags]);
 
   useEffect(() => {
     const fetchNote = async () => {
       if (id !== "new") {
         try {
+          setLoading(true); 
+          const decryptedId = decrypt(id);
           const notes = await NotesService.getNoteById(decryptedId, accessToken);
           setPrevData(notes.data);
           reset({
             title: notes.data?.title || "",
             content: notes.data?.content || "",
-            tags: notes.data?.tags.map((tag) => ({
-              value: tag._id,
-              label: tag.name,
-            })) || [],
+            tags:
+              notes.data?.tags.map((tag) => ({
+                value: tag._id,
+                label: tag.name,
+                key: tag._id,
+              })) || [],
           });
+          setLoading(false);
         } catch (error) {
           console.error("Error fetching notes:", error.message);
+          setLoading(false);
         }
       } else {
         reset({ title: "", content: "", tags: [] });
@@ -70,45 +78,54 @@ function NotePage() {
     };
 
     fetchNote();
-  }, [decryptedId, reset, accessToken]);
+  }, [id, reset, accessToken]);
 
   const onSubmit = async (data) => {
     try {
-      setLoading(true);
+      setLoading(true); 
       const formattedData = {
         ...data,
-        tags: data.tags.map((tag) => tag.value),
+        tags: tagsValue.map((tag) => tag.value),
       };
+      console.log("formattedData: ", formattedData);
+      
       const response = await NotesService.saveNote(formattedData, accessToken);
       setLoading(false);
       setMessagePopup(true);
-      navigate(`/dashboard/notes/${response.data._id}`);
+      navigate(`/dashboard/notes/${encrypt(response.data._id)}`);
     } catch (error) {
       console.error("Error saving note:", error);
+      setLoading(false);
     }
   };
 
   const handleDelete = async () => {
     try {
+      setLoading(true); 
+      const decryptedId = decrypt(id);
       await NotesService.deleteNote(decryptedId, accessToken);
+      setLoading(false);
       navigate(-1);
     } catch (error) {
       console.error("Error deleting note:", error);
+      setLoading(false);
     }
   };
 
   const updateNote = async () => {
     try {
-      setLoading(true);
+      setLoading(true); 
       const formattedData = {
         ...prevData,
-        tags: prevData.tags.map((tag) => tag.value),
+        tags: tagsValue.map((tag) => tag.value),
       };
-      await NotesService.updateNote(id, formattedData, accessToken);
+      const decryptedId = decrypt(id);
+      await NotesService.updateNote(decryptedId, formattedData, accessToken);
       setLoading(false);
       setMessagePopup(true);
     } catch (error) {
       console.error("Error updating note:", error);
+      setLoading(false);
     }
   };
 
@@ -157,79 +174,87 @@ function NotePage() {
   };
 
   return (
+    <>
+    <Helmet>
+        <title>{`${prevData?.title || prevData?.content} | Notes | Actionote`}</title>
+        <meta name="description" content="write and save notes " />
+        <meta name="keywords" content="notes, actionote, information" />
+      </Helmet>
     <div className="w-full min-h-screen px-5 flex flex-col justify-start items-center">
-      <form onSubmit={handleSubmit(onSubmit)} className="w-full flex flex-col items-center gap-3">
-        {/* Title Input */}
-        <Controller
-          name="title"
-          control={control}
-          render={({ field }) => (
+      {loading && (
+        <PopupHolder>
+          <ClockLoader color="#39a2ff" size={100} speedMultiplier={4}/>
+        </PopupHolder>
+      )}
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="w-full flex flex-col items-center gap-3"
+      >
+        {loading ? (
+           <PopupHolder>
+           <ClockLoader color="#39a2ff" size={100} speedMultiplier={4}/>
+         </PopupHolder>
+        ) : (
+          <>
             <input
-              {...field}
+              {...register("title")}
               className="text-3xl font-bold text-[#39a2ff] bg-inherit outline-none w-full sm:w-[90vw] lg:w-[60vw] border-b-2 border-[#39a2ff]"
               placeholder="Title of Note"
-              value={prevData?.title || ""}
             />
-          )}
-        />
-        
-        {/* Tag Selection */}
-        <div className="w-full h-full lg:px-40 flex justify-center items-center gap-3">
-          <TagBar tags={prevData?.tags || []} />
-          <Controller
-            name="tags"
-            control={control}
-            render={({ field }) => (
+
+            <div className="w-full h-full lg:px-40 flex justify-center items-center gap-3">
+              <TagBar tags={prevData?.tags || []} />
               <Select
-                {...field}
+                {...register("tags")}
                 isMulti
                 options={tagsOptions}
-                value={selectedTags}  // Use selectedTags to control the value
                 className="react-select-container z-50 w-full sm:w-[90vw] lg:w-[30vw]"
                 classNamePrefix="react-select"
                 styles={customStyles}
-                onChange={(selected) => {
-                  setValue("tags", selected);
-                  setSelectedTags(selected);  // Update selectedTags on change
+                onChange={(value) => {
+                  setTagsValue(value);
                 }}
               />
-            )}
-          />
-        </div>
+            </div>
 
-        {/* Content Editor */}
-        <Controller
-          name="content"
-          control={control}
-          render={({ field }) => (
             <TinyRTE
-              {...field}
+              {...register("content")}
               className="w-full sm:w-[90vw] lg:w-[60vw] lg:h-[90vw] mt-4"
-              initialValue={prevData?.content || ""}
+              initialValue={prevData?.content}
               handleEditorChange={(content) => setValue("content", content)}
             />
-          )}
-        />
 
-        {/* Submit/Update Buttons */}
-        {id === "new" ? (
-          <button type="submit" className="text-xl px-8 py-2 rounded-full text-white border-2 border-[#39a2ff] bg-[#39a2ff]">
-            Save
-          </button>
-        ) : (
-          <div className="w-full flex justify-center items-center gap-5">
-            <div onClick={handleDelete} className="text-xl px-8 py-2 rounded-full text-red-500 border-2 border-red-500 hover:text-white hover:bg-red-500">
-              Delete
-            </div>
-            <div>
-              <button type="button" onClick={updateNote} className="text-xl px-8 py-2 rounded-full text-white border-2 border-[#39a2ff] bg-[#39a2ff]">
-                Update
+            {id === "new" ? (
+              <button
+                type="submit"
+                className="text-xl px-8 py-2 rounded-full text-white border-2 border-[#39a2ff] bg-[#39a2ff]"
+              >
+                Save
               </button>
-            </div>
-          </div>
+            ) : (
+              <div className="w-full flex justify-center items-center gap-5">
+                <div
+                  onClick={handleDelete}
+                  className="text-xl px-8 py-2 rounded-full text-red-500 border-2 border-red-500 hover:text-white hover:bg-red-500"
+                >
+                  Delete
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={updateNote}
+                    className="text-xl px-8 py-2 rounded-full text-white border-2 border-[#39a2ff] bg-[#39a2ff]"
+                  >
+                    Update
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </form>
     </div>
+    </>
   );
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -13,17 +14,19 @@ const CalendarPage = () => {
   const accessToken = useSelector((state) => state.auth.accessToken);
   const [events, setEvents] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    startDate: new Date(),
-    endDate: new Date(),
-    description: "",
-    location: "",
-    allDay: false,
-    color: "#39a2ff",
-    recurrence: "none",
-    reminder: 30,
-    status: "confirmed",
+  const { register, handleSubmit, setValue, reset } = useForm({
+    defaultValues: {
+      title: "",
+      startDate: new Date(),
+      endDate: new Date(),
+      description: "",
+      location: "",
+      allDay: false,
+      color: "#39a2ff",
+      recurrence: "none",
+      reminder: 30,
+      status: "confirmed",
+    },
   });
 
   // Fetch Calendar Events
@@ -31,7 +34,6 @@ const CalendarPage = () => {
     const fetchEvents = async () => {
       try {
         const fetchedEvents = await CalendarService.getEvents(accessToken);
-        // Convert fetched events to match the format required by the calendar
         const formattedEvents = fetchedEvents.map((event) => ({
           ...event,
           start: new Date(event.startDate),
@@ -46,19 +48,12 @@ const CalendarPage = () => {
     fetchEvents();
   }, [accessToken]);
 
-  // Handle Form Input Change
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
-
-  // Save Calendar Event
-  const handleSave = async () => {
+  const handleSave = async (data) => {
     try {
       const eventData = {
-        ...form,
-        startDate: form.startDate.toISOString(),
-        endDate: form.endDate.toISOString(),    
+        ...data,
+        startDate: data.startDate.toISOString(),
+        endDate: data.endDate.toISOString(),
       };
       const savedEvent = await CalendarService.saveEvent(eventData, accessToken);
       const newEvent = {
@@ -68,10 +63,27 @@ const CalendarPage = () => {
       };
       setEvents([...events, newEvent]);
       setShowModal(false);
+      reset();
     } catch (error) {
       console.error("Error saving event:", error);
       alert("Failed to save event. Please try again.");
     }
+  };
+
+  const handleSelectSlot = () => {
+    reset({
+      title: "",
+      startDate: new Date(),
+      endDate: new Date(),
+      description: "",
+      location: "",
+      allDay: false,
+      color: "#39a2ff",
+      recurrence: "none",
+      reminder: 30,
+      status: "confirmed",
+    });
+    setShowModal(true);
   };
 
   return (
@@ -88,21 +100,7 @@ const CalendarPage = () => {
           endAccessor="end"
           style={{ height: "75vh" }}
           className="rbc-calendar dark:bg-gray-900 dark:text-gray-300 rounded-lg shadow-md"
-          onSelectSlot={() => {
-            setForm({
-              title: "",
-              startDate: new Date(),
-              endDate: new Date(),
-              description: "",
-              location: "",
-              allDay: false,
-              color: "#39a2ff",
-              recurrence: "none",
-              reminder: 30,
-              status: "confirmed",
-            });
-            setShowModal(true);
-          }}
+          onSelectSlot={handleSelectSlot}
           selectable
         />
       </div>
@@ -115,9 +113,23 @@ const CalendarPage = () => {
               Add Event
             </h2>
 
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit(handleSave)}>
+              <input
+                {...register("title")}
+                placeholder="Title"
+                className="w-full p-2 border rounded"
+              />
+              <DatePicker
+                selected={new Date()}
+                onChange={(date) => setValue("startDate", date)}
+                className="w-full p-2 border rounded"
+              />
+              <DatePicker
+                selected={new Date()}
+                onChange={(date) => setValue("endDate", date)}
+                className="w-full p-2 border rounded"
+              />
               {/* Other form fields here */}
-
               <div className="flex justify-end space-x-2">
                 <button
                   type="button"
@@ -127,8 +139,7 @@ const CalendarPage = () => {
                   Cancel
                 </button>
                 <button
-                  type="button"
-                  onClick={handleSave}
+                  type="submit"
                   className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
                 >
                   Save

@@ -72,17 +72,11 @@ const getNoteById = asyncHandler(async (req, res) => {
 const deleteNote = asyncHandler(async (req, res) => {
   const { noteId } = req.params;
 
-  const note = await Note.findById(noteId);
+  const note = await Note.findOneAndDelete({ _id: noteId, owner: req.user._id });
 
   if (!note) {
     throw new ApiError(404, "Note not found.");
   }
-
-  if (!note.owner.equals(req.user._id)) {
-    throw new ApiError(403, "You do not have permission to delete this note.");
-  }
-
-  await note.remove();
 
   return res
     .status(200)

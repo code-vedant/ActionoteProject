@@ -6,6 +6,7 @@ import { useDispatch } from "react-redux";
 import AuthService from "@/Services/auth.service";
 import { login as AuthLogin } from "@/Store/auth.store";
 import { Helmet } from "react-helmet";
+import GoogleAuth from "@/Components/Auth/GoogleLoginButton";
 
 function Login() {
   const { register, handleSubmit } = useForm();
@@ -17,14 +18,12 @@ function Login() {
   const login = async (data) => {
     setLoading(true);
     setError("");
-    console.log("Form data:", data);
 
     try {
       const res = await AuthService.login(data);
-      console.log("Response from login API:", res.data);
 
       if (res && res.data) {
-        const { user, accessToken, refreshToken } = res.data; // Access user inside res.data
+        const { user, accessToken, refreshToken } = res.data;
 
         if (user && accessToken && refreshToken) {
           dispatch(
@@ -83,7 +82,7 @@ function Login() {
         We're happy to see you again. Please log in to continue.
         </p>
         <div className="form-left z-20 w-full h-screen flex justify-center items-start mt-12">
-          <div className="w-11/12 lg:w-1/3 h-fit border bg-white shadow-gray-100 dark:shadow-gray-600 shadow-md dark:bg-[#1d1d1d] px-4 pt-10 pb-16 lg:px-16">
+          <div className="w-11/12 lg:w-1/3 h-fit border bg-white shadow-gray-100 dark:shadow-gray-600 shadow-md dark:bg-[#1d1d1d] px-4 pt-10 pb-12 lg:px-16">
             <p className="text-2xl text-center font-bold dark:text-[#f2f3f4] font-greatvibes tracking-widest mb-10">
               Sign In
             </p>
@@ -127,13 +126,10 @@ function Login() {
                 Sign Up
               </Link>
             </p>
-            {/* <div
-            onClick={googleLogin}
-            className="w-full h-fit flex items-center justify-start gap-3 bg-red-400 py-1 px-4 rounded-md cursor-pointer"
-          >
-            <div className="logoHolder w-10 h-10 bg-black"></div>
-            <h1 className="text-xl text-center font-semibold">Log in with Google</h1>
-          </div> */}
+            <div className="w-full">
+              <p className="text-center py-2">-or-</p>
+            <GoogleAuth/>
+            </div>
           </div>
         </div>
       </main>

@@ -3,8 +3,7 @@ import { Editor } from "@tinymce/tinymce-react";
 import { useTheme } from "@/context/ThemeContext";
 
 function TinyRTE({ initialValue, handleEditorChange }) {
-
-  const {theme} = useTheme()
+  const { theme } = useTheme();
 
   return (
     <Editor
@@ -41,11 +40,10 @@ function TinyRTE({ initialValue, handleEditorChange }) {
           { value: "First.Name", title: "First Name" },
           { value: "Email", title: "Email" },
         ],
-        forced_root_block: false,
+        forced_root_block: 'p', 
         block_formats:
           "Normal=n;Heading 1=h1;Heading 2=h2;Heading 3=h3;Blockquote=blockquote",
 
-        // Custom background and text color for the editor content
         content_style: `
           body {
             background-color: ${theme === "dark" ? "#282828" : "#f4f4f4"};
@@ -65,7 +63,7 @@ function TinyRTE({ initialValue, handleEditorChange }) {
         `,
       }}
       initialValue={initialValue || ""}
-      onEditorChange={(content, editor) => handleEditorChange(content)}
+      onEditorChange={(content) => handleEditorChange(content)}
     />
   );
 }

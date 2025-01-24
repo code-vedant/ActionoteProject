@@ -57,16 +57,15 @@ function ContentBarMG({ task, accessToken }) {
 
   const bgColorDark = useMemo(() => {
     const bgColors = [
-      "#1F1B24", // Deep dark gray with a hint of purple
-      "#2C3E50", // Charcoal with a bluish tint
-      "#34495E", // Slate gray with a hint of blue
-      "#4A4E69", // Dark muted purple
-      "#2E4053", // Deep teal blue
-      "#212F3C", // Midnight green
-      "#3A3B3C", // Graphite gray
-      "#5D6D7E", // Dusty blue-gray
-      "#4A235A", // Dark plum purple
-      "#212A3E", // Rich dark blue
+      "#1C1C1C", // Slightly darker than #282828
+      "#202020", // Neutral dark gray
+      "#242424", // Off-black with a soft tone
+      "#333333", // Classic dark gray with enough contrast
+      "#3A3A3A", // Medium-dark gray for slight variation
+      "#1A1A1A", // Deep black-gray
+      "#191919", // Rich off-black
+      "#303030", // Neutral medium dark gray
+      "#373737", // Slightly warm dark gray
     ];
     return bgColors[Math.floor(Math.random() * bgColors.length)];
   }, []);

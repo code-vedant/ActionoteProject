@@ -4,27 +4,12 @@ import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import { generateAccessAndRefreshToken } from "../utils/token.js";
+import { OAuth2Client } from "google-auth-library";
 
-const generateAccessAndRefreshToken = async (userId) => {
-  try {
-    const user = await User.findById(userId);
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-    user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
-
-    return {
-      accessToken,
-      refreshToken,
-    };
-  } catch (error) {
-    throw new ApiError(
-      500,
-      "Something went wrong while generating access token and refresh token"
-    );
-  }
-};
+const isProduction = process.env.NODE_ENV === "production";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -33,7 +18,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const existedUser = await User.findOne({ email: email });
+  const existedUser = await User.findOne({ email });
 
   if (existedUser) {
     throw new ApiError(409, "Email already exists");
@@ -42,7 +27,7 @@ const registerUser = asyncHandler(async (req, res) => {
   let avatar = "";
   if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {
     const avatarBuffer = req.files.avatar[0].buffer;
-    avatar = await uploadOnCloudinary(avatarBuffer, `avatar_${username}`);
+    avatar = await uploadOnCloudinary(avatarBuffer, `avatar_${email}`);
   }
 
   const user = await User.create({
@@ -62,19 +47,23 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: isProduction,
   };
 
-  return res.status(201).cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).json(
-    new ApiResponse(200, { user: createdUser, accessToken, refreshToken }, "User registered successfully")
-  );
+  return res
+    .status(201)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(201, { user: createdUser, accessToken, refreshToken }, "User registered successfully")
+    );
 });
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email) {
-    throw new ApiError(400, "Email or username is required");
+  if (!email || !password) {
+    throw new ApiError(400, "Email and password are required");
   }
 
   const user = await User.findOne({ email });
@@ -95,31 +84,33 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: isProduction,
   };
 
-  return res.status(200)
+  return res
+    .status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
-    .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged In Successfully"));
+    .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully"));
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  await User.findByIdAndUpdate(
-    req.user._id,
-    { $set: { refreshToken: undefined } },
-    { new: true }
-  );
+  if (!req.user || !req.user._id) {
+    throw new ApiError(401, "Unauthorized request");
+  }
+
+  await User.findByIdAndUpdate(req.user._id, { $set: { refreshToken: undefined } }, { new: true });
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: isProduction,
   };
 
-  return res.status(200)
+  return res
+    .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, "User Logged Out Successfully"));
+    .json(new ApiResponse(200, "User logged out successfully"));
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -133,27 +124,66 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
     const user = await User.findById(decodedToken._id);
 
-    if (!user) {
-      throw new ApiError(401, "Invalid refresh token");
+    if (!user || !user.refreshToken || incomingRefreshToken !== user.refreshToken) {
+      throw new ApiError(401, "Invalid or expired refresh token");
     }
-
-    if (incomingRefreshToken !== user.refreshToken) {
-      throw new ApiError(401, "Refresh token expired");
-    }
-
-    const options = {
-      httpOnly: true,
-      secure: true,
-    };
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
 
-    return res.status(200)
+    const options = {
+      httpOnly: true,
+      secure: isProduction,
+    };
+
+    return res
+      .status(200)
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
       .json(new ApiResponse(200, { accessToken, refreshToken }, "Access token refreshed"));
   } catch (error) {
+    console.error(error);
     throw new ApiError(401, error?.message || "Invalid refresh token");
+  }
+});
+
+
+const googleLogin = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+
+    if (!ticket) {
+      throw new ApiError(401, "Invalid Google token");
+    }
+
+    const { name, email, picture } = ticket.getPayload();
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({ fullName: name, email, avatar: picture });
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+
+    const options = {
+      httpOnly: true,
+      secure: isProduction,
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(new ApiResponse(200, { user, accessToken, refreshToken }, "Google login successful"));
+  } catch (error) {
+    console.error(error);
+    throw new ApiError(401, "Google login failed");
   }
 });
 
@@ -237,6 +267,7 @@ export {
   loginUser,
   logoutUser,
   refreshAccessToken,
+  googleLogin,
   changeCurrentPassword,
   getCurrentUser,
   updateAccountsDetails,

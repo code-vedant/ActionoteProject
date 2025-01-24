@@ -46,7 +46,7 @@ const NotesService = {
 
   async updateNote(noteId, updatedNote, accessToken) {
     try {
-      const response = await axios.put(`${URL}/update/${noteId}`, updatedNote, {
+      const response = await axios.post(`${URL}/update/${noteId}`, updatedNote, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       return response.data;

@@ -31,6 +31,18 @@ const AuthService = {
       }
     }
   },
+  googleLogin: async (data) => {
+    try {
+      const response = await axios.post(`${URL}/google-login`, data);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error("Error message:", error.response.data.message);
+      } else {
+        console.error("Error:", error.message);
+      }
+    }
+  },
   logout: async (accessToken) => {
     try {
       const response = await axios.post(

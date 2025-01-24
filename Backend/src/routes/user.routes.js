@@ -9,6 +9,7 @@ import {
   registerUser,
   updateAccountsDetails,
   updateUserAvatar,
+  googleLogin
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
@@ -26,7 +27,7 @@ router.route("/register").post(
 );
 
 router.route("/login").post(loginUser);
-
+router.route("/google-login").post(googleLogin);
 // secured Routes
 
 router.route("/logout").post(verifyJWT, logoutUser);

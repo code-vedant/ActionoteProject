@@ -13,98 +13,100 @@ import store from './Store/Store.js';
 import DrawingCanvas from './Components/DrawCanvas/DrawingCanvas.jsx';
 import NotFound from './Pages/NotFound.jsx';
 import PomodoroTimer from './Components/Promodo/PomodoroTimer.jsx';
-import Calendar from './Components/Calendars/Calendar.jsx';
+import CalendarPage from './Components/Calendars/Calendar.jsx';
 import NotesHome from './Components/Notes/NotesHome.jsx';
 import DrawHome from './Components/DrawCanvas/DrawHome.jsx';
 import DiaryHome from './Components/Diary/DiaryHome.jsx';
-import NotesNew from './Components/Notes/NotePage.jsx';
+import NotePage from './Components/Notes/NotePage.jsx';
 import TodoPage from './Components/Todo/TodoHome.jsx';
-import CalendarPage from './Components/Calendars/Calendar.jsx';
 import DashboardHome from './Pages/DashboardHome.jsx';
 import TagPage from './Components/tags/TagPage.jsx';
-import NotePage from './Components/Notes/NotePage.jsx';
 import ProfilePage from './Components/Profile/ProfilePage.jsx';
+import { GoogleOAuthProvider } from '@react-oauth/google'; 
+import CalendarHome from './Components/Calendars/CalendarHome.jsx';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App/>,
-    errorElement: <NotFound/>,
+    element: <App />,
+    errorElement: <NotFound />,
     children: [
-        {
-          path: '/',
-          element: <Homepage/>
-        }
-    ]
+      {
+        path: '/',
+        element: <Homepage />,
+      },
+    ],
   },
   {
     path: '/login',
-    element:
-      <Login/>
+    element: <Login />,
   },
   {
     path: '/register',
-    element: 
-      <Signup/>
+    element: <Signup />,
   },
   {
     path: '/dashboard',
-    element: <Dashboard/>,
-    children:[
+    element: <Dashboard />,
+    children: [
       {
         path: '/dashboard/',
-        element: <DashboardHome/>
+        element: <DashboardHome />,
       },
       {
         path: '/dashboard/profile',
-        element: <ProfilePage/>
+        element: <ProfilePage />,
       },
       {
         path: '/dashboard/draw',
-        element: <DrawHome/>
+        element: <DrawHome />,
       },
       {
         path: '/dashboard/draw/:id',
-        element: <DrawingCanvas/>
+        element: <DrawingCanvas />,
       },
       {
         path: '/dashboard/pomodoro',
-        element: <PomodoroTimer/>
+        element: <PomodoroTimer />,
       },
       {
         path: '/dashboard/todo',
-        element: <TodoPage/>
+        element: <TodoPage />,
       },
       {
         path: '/dashboard/calendar',
-        element: <CalendarPage/>
+        element: <CalendarHome />,
       },
       {
         path: '/dashboard/notes',
-        element: <NotesHome/>
+        element: <NotesHome />,
       },
       {
         path: '/dashboard/notes/:id',
-        element: <NotePage/>
+        element: <NotePage />,
       },
       {
         path: '/dashboard/diary',
-        element: <DiaryHome/>
+        element: <DiaryHome />,
       },
       {
         path: '/dashboard/tags',
-        element: <TagPage/>
-      }
-    ]
-  }
-])
+        element: <TagPage />,
+      },
+    ],
+  },
+]);
+
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ThemeProvider>
-      <Provider store={store}>
-        <RouterProvider router={router}/>
-      </Provider>
-    </ThemeProvider>
+    <GoogleOAuthProvider clientId={clientId}>
+      <ThemeProvider>
+        <Provider store={store}>
+        <RouterProvider router={router} future={{ v7_startTransition: true, v7_relativeSplatPath: true }} />
+        </Provider>
+      </ThemeProvider>
+    </GoogleOAuthProvider>
   </StrictMode>
 );
