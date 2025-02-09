@@ -7,6 +7,11 @@ import { useTheme } from "../context/ThemeContext";
 import { useScreen } from "@/context/ScreenContext";
 import { setTags } from "@/Store/tags.store";
 import TagsService from "@/Services/tags.service";
+import pen from "../assets/Icons/pen.webp";
+import penWhite from "../assets/Icons/penWhite.webp";
+import { Link } from "react-router-dom";
+import TodoDashboardBox from "@/Components/Todo/TodoDashboardBox";
+import axios from "axios";
 
 const DashboardHome = () => {
   const [todoData, setTodoData] = useState([]);
@@ -14,264 +19,135 @@ const DashboardHome = () => {
   const accessToken = useSelector((state) => state.auth.accessToken);
   const dispatch = useDispatch();
 
-  const fetchUsertags = async () => {
+  useEffect(() => {
+    const fetchUsertags = async () => {
+      try {
+        const res = await TagsService.getUserTags(accessToken);
+        dispatch(setTags(res.data));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchUsertags();
+  }, [accessToken]);
+
+  useEffect(() => {
+    const fetchData = async (service, setData, dateFormat, key) => {
+      const today = new Date();
+      const summary = [];
+
+      for (let i = 0; i < 6; i++) {
+        const date = new Date(today);
+        key === "date" ? date.setDate(today.getDate() - i) : date.setMonth(today.getMonth() - i);
+        const formattedDate = date.toISOString().split("T")[0].slice(0, dateFormat);
+
+        try {
+          const response = await service(formattedDate, accessToken);
+          const items = response.data?.[formattedDate] || [];
+          summary.push({
+            [key]: formattedDate,
+            total: items.length,
+            completed: items.filter((item) => item.status === true).length,
+          });
+        } catch (error) {
+          summary.push({ [key]: formattedDate, total: 0, completed: 0 });
+        }
+      }
+      setData(summary);
+    };
+
+    fetchData(TodoService.getTodosByDate, setTodoData, 10, "date");
+    fetchData(MonthlyGoalService.getGoalsByMonth, setGoalData, 7, "month");
+  }, [accessToken]);
+
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
+  const { screenWidth } = useScreen();
+  const isMobile = screenWidth < 1024;
+
+  const graphTheme = {
+    axis: {
+      ticks: { text: { fill: isDarkMode ? "#fff" : "#333" } },
+      legend: { text: { fill: isDarkMode ? "#fff" : "#333" } },
+    },
+    legends: { text: { fill: isDarkMode ? "#fff" : "#333" } },
+    tooltip: { container: { background: isDarkMode ? "#333" : "#fff", color: isDarkMode ? "#fff" : "#333" } },
+  };
+
+  const renderGraph = (title, data, keys, indexBy, legendX, legendY) => (
+    <div className="w-full lg:w-[55vw] h-[40vh]">
+      <h2 className="text-3xl font-light text-[#39a2ff]">{title}</h2>
+      <ResponsiveBar
+        data={data}
+        keys={keys}
+        indexBy={indexBy}
+        margin={{ top: 20, right: 130, bottom: 50, left: 60 }}
+        padding={0.3}
+        groupMode="grouped"
+        layout="vertical"
+        colors={({ id }) => (id.includes("Completed") ? "#2de1c2" : "#39a2ff")}
+        axisBottom={{ legend: legendX, legendPosition: "middle", legendOffset: 32 }}
+        axisLeft={{ legend: legendY, legendPosition: "middle", legendOffset: -40 }}
+        enableGridY={false}
+        legends={[{
+          anchor: "top-right",
+          direction: "column",
+          translateX: isMobile ? -250 : 60,
+          itemsSpacing: 0,
+          itemWidth: 80,
+          itemHeight: 20,
+          itemOpacity: 0.75,
+          symbolSize: isMobile ? 8 : 16,
+          symbolShape: "circle",
+        }]}
+        theme={graphTheme}
+      />
+    </div>
+  );
+
+  const [quote,setQuote] = useState("The worst man is the one who sees himself as the best.")
+
+
+  const getQuote =async  () => {
     try {
-      const res = await TagsService.getUserTags(accessToken);
-      dispatch(setTags(res.data))
+      const response =await  axios.get("https://dummyjson.com/quotes/random");
+        setQuote(response.data.quote);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching quote:", error);
     }
   };
 
-  useEffect(() => {
-    fetchUsertags()
-  }, [accessToken]);
 
-  useEffect(() => {
-    // Fetch Todo data
-    const fetchTodoData = async () => {
-      const today = new Date();
-      const summary = [];
 
-      for (let i = 0; i < 6; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        const formattedDate = date.toISOString().split("T")[0];
-
-        try {
-          const response = await TodoService.getTodosByDate(
-            formattedDate,
-            accessToken
-          );
-
-          const todos = response.data?.[formattedDate] || [];
-
-          if (Array.isArray(todos)) {
-            const totalTodos = todos.length;
-            const completedTodos = todos.filter(
-              (todo) => todo.status === true
-            ).length;
-
-            summary.push({
-              date: formattedDate,
-              totalTodos,
-              completedTodos,
-            });
-          } else {
-            summary.push({
-              date: formattedDate,
-              totalTodos: 0,
-              completedTodos: 0,
-            });
-          }
-        } catch (error) {
-          summary.push({
-            date: formattedDate,
-            totalTodos: 0,
-            completedTodos: 0,
-          });
-        }
-      }
-
-      setTodoData(summary);
-    };
-
-    // Fetch Monthly Goals data
-    const fetchGoalData = async () => {
-      const today = new Date();
-      const summary = [];
-
-      for (let i = 0; i < 6; i++) {
-        const date = new Date(today);
-        date.setMonth(today.getMonth() - i); // Go back month by month
-        const formattedMonth = date.toISOString().split("T")[0].slice(0, 7); // e.g., '2025-01'
-
-        try {
-          const response = await MonthlyGoalService.getGoalsByMonth(
-            formattedMonth,
-            accessToken
-          );
-
-          const goals = response.data || [];
-
-          if (Array.isArray(goals)) {
-            const totalGoals = goals.length;
-            const completedGoals = goals.filter(
-              (goal) => goal.status === true
-            ).length;
-
-            summary.push({
-              month: formattedMonth,
-              totalGoals,
-              completedGoals,
-            });
-          } else {
-            summary.push({
-              month: formattedMonth,
-              totalGoals: 0,
-              completedGoals: 0,
-            });
-          }
-        } catch (error) {
-          summary.push({
-            month: formattedMonth,
-            totalGoals: 0,
-            completedGoals: 0,
-          });
-        }
-      }
-
-      setGoalData(summary);
-    };
-
-    fetchTodoData();
-    fetchGoalData();
-  }, [accessToken]);
-
-  // Sort Todo Data and Goal Data
-  const sortedTodoData = todoData.sort(
-    (a, b) => new Date(a.date) - new Date(b.date)
-  );
-  const sortedGoalData = goalData.sort(
-    (a, b) => new Date(a.month) - new Date(b.month)
-  );
-
-  const todoGraphData = sortedTodoData.map((entry) => ({
-    date: entry.date,
-    "Total Todos": entry.totalTodos,
-    "Completed Todos": entry.completedTodos,
-  }));
-
-  const goalGraphData = sortedGoalData.map((entry) => ({
-    month: entry.month,
-    "Total Goals": entry.totalGoals,
-    "Completed Goals": entry.completedGoals,
-  }));
-
-  const { theme } = useTheme();
-  const isDarkMode = theme == "dark";
-  const {screenWidth} = useScreen()
-  const isMobile = screenWidth < 1024;
-
-  const customTheme = {
-    axis: {
-      ticks: {
-        text: {
-          fill: isDarkMode ? "#ffffff" : "#333333",
-        },
-      },
-      legend: {
-        text: {
-          fill: isDarkMode ? "#ffffff" : "#333333",
-        },
-      },
-    },
-    legends: {
-      text: {
-        fill: isDarkMode ? "#ffffff" : "#333333",
-      },
-    },
-    tooltip: {
-      container: {
-        background: isDarkMode ? "#333333" : "#ffffff",
-        color: isDarkMode ? "#ffffff" : "#333333",
-      },
-    },
-  };
-
-  
 
   return (
-    <div className="w-full h-[91vh] flex flex-col shadow-lg px-2 lg:px-20 gap-8">
-    <div className="w-[58vh] lg:w-[55vw] h-[20vh] lg:h-[40vh]">
-      <h2 className="text-3xl font-light text-[#39a2ff]">Todo Statistics</h2>
-      <ResponsiveBar
-        data={todoGraphData}
-        keys={["Total Todos", "Completed Todos"]}
-        indexBy="date"
-        margin={{ top: 20, right: 130, bottom: 50, left: 60 }}
-        padding={0.3}
-        groupMode="grouped"
-        layout="vertical"
-        colors={({ id }) =>
-          id === "Completed Todos" ? "#2de1c2" : "#39a2ff"
-        }
-        axisBottom={{
-          legend: "Date",
-          legendPosition: "middle",
-          legendOffset: 32,
-        }}
-        axisLeft={{
-          legend: "Todos",
-          legendPosition: "middle",
-          legendOffset: -40,
-        }}
-          enableGridY={false}
-        legends={[
-          {
-            anchor: "top-right",
-            direction: "column",
-            translateX: isMobile ? -250 : 60,
-            translateY: isMobile ? -20 : 0,
-            itemsSpacing: 0,
-            itemWidth: 80,
-            itemHeight: 20,
-            itemOpacity: 0.75,
-            symbolSize: 12,
-            symbolShape: "circle",
-            symbolBorderColor: "rgba(0, 0, 0, .5)",
-            className: "lg:translate-x-[90px] lg:translate-y-0 sm:translate-x-0 sm:translate-y-[-20px]",
-          },
-        ]}
-        theme={customTheme}
-      />
+    <div className="w-full h-[91vh] flex lg:flex-row flex-col shadow-lg px-2 lg:px-20 gap-8">
+      <div className="flex flex-col gap-5 w-full">
+        {renderGraph("Todo Statistics", todoData, ["total", "completed"], "date", "Date", "Todos")}
+        {renderGraph("Monthly Goals Statistics", goalData, ["total", "completed"], "month", "Month", "Goals")}
+      </div>
+      <div className="flex flex-col justify-start w-full h-full">
+        <div className="w-full hidden lg:block h-44 lg:h-96 px-2 py-2">
+          <TodoDashboardBox />
+        </div>
+        <div className=" w-full h-fit py-2 hidden lg:flex items-center gap-4">
+          {[{ link: "notes/new", label: "Add Note" }, { link: "draw/startedNewDrawing", label: "Let's Draw" }, { link: "diary", label: "Go to Diary" }, { link: "calendar", label: "Add Event" }].map(({ link, label }) => (
+            <Link key={link} to={link} className="w-32 h-10 flex justify-center items-center bg-white shadow-md dark:bg-[#282828] rounded-full px-3 gap-2">
+              <h1>{label}</h1>
+            </Link>
+          ))}
+        </div>
+        <div className="w-full h-14 lg:h-44 lg:mt-1 shadow-lg flex flex-col justify-center items-end gap-4 bg-white">
+            <p className="w-full text-center h-full lg:px-5 flex justify-center items-center">
+            {quote}
+            </p>
+            <button onClick={getQuote} className="font-light text-xs w-fit h-fit px-2">
+              <h1>change quote</h1>
+            </button>
+        </div>
+      </div>
     </div>
-  
-    <div className="w-[58vh] lg:w-[55vw] h-[20vh] lg:h-[40vh]">
-      <h2 className="text-3xl font-light text-[#39a2ff]">Monthly Goals Statistics</h2>
-      <ResponsiveBar
-        data={goalGraphData}
-        keys={["Total Goals", "Completed Goals"]}
-        indexBy="month"
-        margin={{ top: 20, right: 130, bottom: 50, left: 60 }}
-        padding={0.3}
-        groupMode="grouped"
-        layout="vertical"
-        colors={({ id }) =>
-          id === "Completed Goals" ? "#2de1c2" : "#39a2ff"
-        }
-        axisBottom={{
-          legend: "Month",
-          legendPosition: "middle",
-          legendOffset: 32,
-        }}
-        axisLeft={{
-          legend: "Goals",
-          legendPosition: "middle",
-          legendOffset: -40,
-        }}
-        enableGridY={false}
-        legends={[
-          {
-            anchor: "top-right",
-            direction: "column",
-            translateX: isMobile ? -250 : 60,
-            translateY: isMobile ? -20 : 0,
-            itemsSpacing: 0,
-            itemWidth: 80,
-            itemHeight: 20,
-            itemOpacity: 0.75,
-            symbolSize: isMobile ? 8 : 16,
-            symbolShape: "circle",
-            symbolBorderColor: "rgba(0, 0, 0, .5)",
-            className: "lg:translate-x-[90px] lg:translate-y-0 sm:translate-x-0 sm:translate-y-[-20px]",
-          },
-        ]}
-        theme={customTheme}
-      />
-    </div>
-  </div>
-  
   );
 };
 

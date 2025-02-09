@@ -35,7 +35,7 @@ function ContentBarTask({ task,accessToken}) {
         status: isChecked ? "completed" : "pending",
       };
       await TodoService.editTodo(task._id, updatedTaskData, accessToken);
-      onEdit(updatedTaskData); // Notify parent component with updated task
+      onEdit(updatedTaskData); 
     } catch (error) {
       console.error("Failed to edit task", error);
     }
