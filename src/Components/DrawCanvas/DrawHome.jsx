@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import pen from "../../assets/Icons/pen.png";
+import pen from "../../assets/Icons/pen.webp";
 import PrevDrawsCard from './PrevDrawsCard';
 import { Link } from 'react-router-dom';
 import DrawService from '@/Services/draw.service';

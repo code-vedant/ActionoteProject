@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
-import pen from "../../assets/Icons/pen.png";
-import eraser from "../../assets/Icons/eraser.png";
+import pen from "../../assets/Icons/pen.webp";
+import eraser from "../../assets/Icons/eraser.webp";
 import DrawService from "../../Services/draw.service"; // Import the DrawService
 import { useSelector } from "react-redux";
 import { decrypt, encrypt } from "@/Binders/Encypt";

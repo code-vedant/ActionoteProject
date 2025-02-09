@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
 import LogoutBtn from "./LogoutBtn";
 
-import calendarblueint from "../assets/Icons/calendarblueint.png";
-import timerblue from "../assets/Icons/timerblue.png";
-import todoblue from "../assets/Icons/todoblue.png";
-import notesblue from "../assets/Icons/notesblue.png";
-import diaryblueint from "../assets/Icons/diaryblueint.png";
-import drawingblueint from "../assets/Icons/drawingblueint.png";
+import calendarblueint from "../assets/Icons/calendarblueint.webp";
+import timerblue from "../assets/Icons/timerblue.webp";
+import todoblue from "../assets/Icons/todoblue.webp";
+import notesblue from "../assets/Icons/notesblue.webp";
+import diaryblueint from "../assets/Icons/diaryblueint.webp";
+import drawingblueint from "../assets/Icons/drawingblueint.webp";
 
 function SideBar({ viewSidebar, handleview }) {
   const [activeIndex, setActiveIndex] = useState(0);

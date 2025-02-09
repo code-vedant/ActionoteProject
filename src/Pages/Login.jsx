@@ -64,7 +64,7 @@ function Login() {
         <meta property="og:url" content="https://actionote.com/login" />
         <meta
           property="og:image"
-          content="https://actionote.com/assets/actionote-logo.png"
+          content="https://actionote.com/assets/actionote-logo.webp"
         />
         <meta property="og:site_name" content="Actionote" />
         <meta name="twitter:card" content="summary_large_image" />

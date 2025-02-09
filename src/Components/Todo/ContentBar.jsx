@@ -1,10 +1,10 @@
 // ContentBar.js
 import React, { useMemo, useState } from "react";
 import TagBar from "../tags/TagBar";
-import penBlue from "../../assets/Icons/penBlue.png";
-import deleteRed from "../../assets/Icons/deleteRed.png";
-import check from "../../assets/Icons/check.png";
-import checkbox from "../../assets/Icons/checkbox.png";
+import penBlue from "../../assets/Icons/penBlue.webp";
+import deleteRed from "../../assets/Icons/deleteRed.webp";
+import check from "../../assets/Icons/check.webp";
+import checkbox from "../../assets/Icons/checkbox.webp";
 import TodoService from "../../Services/todo.service"; // Ensure correct path to the service
 import { useTheme } from "@/context/ThemeContext";
 

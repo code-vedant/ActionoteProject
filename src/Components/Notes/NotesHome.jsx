@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import pen from "../../assets/Icons/pen.png";
 import { Link } from "react-router-dom";
 import NotesService from "../../Services/notes.service";
 import { useSelector } from "react-redux";
-import plus from "../../assets/Icons/plus.png";
+import plus from "../../assets/Icons/plus.webp";
 import NotesBox from "./NotesBox";
 import { Helmet } from "react-helmet";
 import PopupHolder from "../Popups/PopupHolder";

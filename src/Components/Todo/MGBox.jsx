@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ContentBarMG from "./ContentBarMG";
 import MonthlyGoalService from "@/Services/monthlyGoal.service";
-import down from "../../assets/Icons/down.png";
+import down from "../../assets/Icons/down.webp";
 
 const useFetchGoals = (month, accessToken) => {
   const [goals, setGoals] = useState([]);

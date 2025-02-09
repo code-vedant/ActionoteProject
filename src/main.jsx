@@ -13,7 +13,6 @@ import store from './Store/Store.js';
 import DrawingCanvas from './Components/DrawCanvas/DrawingCanvas.jsx';
 import NotFound from './Pages/NotFound.jsx';
 import PomodoroTimer from './Components/Promodo/PomodoroTimer.jsx';
-import CalendarPage from './Components/Calendars/Calendar.jsx';
 import NotesHome from './Components/Notes/NotesHome.jsx';
 import DrawHome from './Components/DrawCanvas/DrawHome.jsx';
 import DiaryHome from './Components/Diary/DiaryHome.jsx';

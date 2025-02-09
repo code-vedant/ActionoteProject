@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form"; // Import useForm
-import deleteRed from "../../assets/Icons/deleteRed.png";
-import penWhite from "../../assets/Icons/penWhite.png";
+import deleteRed from "../../assets/Icons/deleteRed.webp";
+import penWhite from "../../assets/Icons/penWhite.webp";
 import TagsService from "@/Services/tags.service";
 import PopupHolder from "../Popups/PopupHolder";
-import exit from "../../assets/Icons/exit.png"
+import exit from "../../assets/Icons/exit.webp"
 
 function getTextColor(bgColor) {
   const hex = bgColor.replace("#", "");

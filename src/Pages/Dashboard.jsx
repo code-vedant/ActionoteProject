@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Outlet } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import logoblue from "../assets/Icons/logoblue.png";
+import logoblue from "../assets/Icons/logoblue.webp";
 import SideBar from "@/Components/SideBar";
-import shiba from "../assets/Icons/shiba.jpg";
-import exit from "../assets/Icons/exit.png";
+import shiba from "../assets/Icons/shiba.webp";
+import exit from "../assets/Icons/exit.webp";
 import TagsService from "@/Services/tags.service";
 import { setTags } from "@/Store/tags.store";
-import userIcon from "../assets/Icons/user.png";
-import tag from "../assets/Icons/tag.png";
+import userIcon from "../assets/Icons/user.webp";
+import tag from "../assets/Icons/tag.webp";
 import { ScreenProvider } from "@/context/ScreenContext";
 
 function Dashboard() {

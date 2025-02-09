@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
-import down from "../../assets/Icons/down.png";
+import down from "../../assets/Icons/down.webp";
 import { useSelector } from "react-redux";
 import { PomodoService } from "@/Services/pomodoro.service";
 

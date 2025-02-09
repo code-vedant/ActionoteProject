@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ContentBarTask from "./ContentBar";
 import TodoService from "@/Services/todo.service";
-import down from "../../assets/Icons/down.png";
+import down from "../../assets/Icons/down.webp";
 
 const useFetchTodo = (currentDate, accessToken) => {
   const [tasks, setTasks] = useState([]);

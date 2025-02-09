@@ -96,7 +96,7 @@ function Signup() {
         <meta property="og:url" content="https://actionote.com/signup" />
         <meta
           property="og:image"
-          content="https://actionote.com/assets/actionote-logo.png"
+          content="https://actionote.com/assets/actionote-logo.webp"
         />
         <meta property="og:site_name" content="Actionote" />
       </Helmet>

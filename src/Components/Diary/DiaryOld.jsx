@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import DiaryService from "@/Services/diary.service";
 import DatePicker from "react-datepicker";
-import dotsBlack from "../../assets/Icons/dotsBlack.png";
-import dotsWhite from "../../assets/Icons/dotsWhite.png";
+import dotsBlack from "../../assets/Icons/dotsBlack.webp";
+import dotsWhite from "../../assets/Icons/dotsWhite.webp";
 import { useTheme } from "@/context/ThemeContext";
 import { useSelector } from "react-redux";
 
