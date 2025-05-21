@@ -10,6 +10,13 @@ Welcome to **ActionNote** – the ultimate productivity app to help you manage y
 - **Task Scheduling**: Assign tasks to specific dates and set reminders.
 - **Dark Mode**: Optimized for a dark interface for reduced eye strain.
 
+## 📸 Feature Preview
+
+| To-Do | Notes | Pomodoro | Calendar | Draw |
+|:----:|:-----:|:--------:|:--------:|:----:|
+| ![To-Do](images/todo.png) | ![Notes](images/notes.png) | ![Pomodoro](images/pomodoro.png) | ![Calendar](images/calendar.png) | ![Draw](images/draw.png) |
+
+
 ## Tech Stack
 
 - **Frontend Framework**: [React](https://reactjs.org/)
