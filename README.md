@@ -14,7 +14,7 @@ Welcome to **ActionNote** – the ultimate productivity app to help you manage y
 
 | To-Do | Notes | Pomodoro | Calendar | Draw |
 |:----:|:-----:|:--------:|:--------:|:----:|
-| ![To-Do](images/todo.png) | ![Notes](images/notes.png) | ![Pomodoro](images/pomodoro.png) | ![Calendar](images/calendar.png) | ![Draw](images/draw.png) |
+| ![To-Do](/public/images/todo.png) | ![Notes](/public/images/notes.png) | ![Pomodoro](/public/images/pomodo.png) | ![Calendar](/public/images/calendar.png) | ![Draw](/public/images/draw.png) |
 
 
 ## Tech Stack
