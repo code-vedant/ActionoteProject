@@ -33,3 +33,9 @@ To run the frontend locally, follow these steps:
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/yourusername/actionnote-frontend.git
+
+2. **.env File Setup**:
+    ```bash
+   VITE_BASE_URL="backend url"
+   VITE_TINY_API_KEY="your tinyMCS Api Key"
+   VITE_GOOGLE_CLIENT_ID="Google Client Id for auth"   
